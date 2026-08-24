@@ -108,12 +108,15 @@ def train_epoch(cfg, model, panel, optimizer, scaler, criterion, ema, state,
 
 
 @torch.no_grad()
-def evaluate(cfg, model, panel, criterion, device, rank: int, world_size: int):
+def evaluate(cfg, model, panel, criterion, device, rank: int, world_size: int,
+             split: str = "val", n_batches: int | None = None):
     model.eval()
     loss_sums = torch.zeros(4, device=device, dtype=torch.float64)
     metric_sums: dict[str, torch.Tensor] = {}
-    for batch in panel.fixed_batches("val", cfg.batch_size, cfg.val_batches,
-                                     seed=cfg.seed + 99 + rank):
+    batch_count = cfg.val_batches if n_batches is None else n_batches
+    split_offset = {"train": 0, "val": 10_000, "test": 20_000}[split]
+    for batch in panel.fixed_batches(split, cfg.batch_size, batch_count,
+                                     seed=cfg.seed + split_offset + rank):
         with torch.autocast("cuda", dtype=torch.float16, enabled=cfg.amp):
             prediction = model(batch["x"], batch["ticker_ids"],
                                batch["target_position"])

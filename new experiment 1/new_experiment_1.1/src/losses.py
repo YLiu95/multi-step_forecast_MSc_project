@@ -41,6 +41,8 @@ def batch_metric_sums(prediction: dict[str, torch.Tensor], batch: dict[str, torc
         "predicted_positive": probability.sum(),
         "magnitude_sum": magnitude.sum(),
         "magnitude_sq_sum": (magnitude ** 2).sum(),
+        "target_magnitude_sum": target_magnitude.sum(),
+        "target_magnitude_sq_sum": (target_magnitude ** 2).sum(),
     }
 
 
@@ -48,13 +50,27 @@ def finalize_metrics(sums: dict[str, torch.Tensor]) -> dict[str, float]:
     count = sums["count"].clamp_min(1)
     mean = sums["magnitude_sum"] / count
     variance = (sums["magnitude_sq_sum"] / count - mean ** 2).clamp_min(0)
+    up_rate = sums["positive"] / count
+    magnitude_mae = sums["absolute_error"] / count
+    zero_magnitude_mae = sums["target_magnitude_sum"] / count
+    direction_accuracy = sums["direction_correct"] / count
+    majority_accuracy = torch.maximum(up_rate, 1 - up_rate)
     return {
-        "magnitude_mae_pct": (sums["absolute_error"] / count).item(),
-        "magnitude_mae_bp": (100 * sums["absolute_error"] / count).item(),
+        "magnitude_mae_pct": magnitude_mae.item(),
+        "magnitude_mae_bp": (100 * magnitude_mae).item(),
         "magnitude_rmse_pct": torch.sqrt(sums["squared_error"] / count).item(),
-        "direction_accuracy": (sums["direction_correct"] / count).item(),
+        "zero_magnitude_mae_bp": (100 * zero_magnitude_mae).item(),
+        "zero_magnitude_rmse_pct": torch.sqrt(
+            sums["target_magnitude_sq_sum"] / count).item(),
+        "magnitude_mae_improvement_vs_zero_pct": (
+            100 * (1 - magnitude_mae / zero_magnitude_mae.clamp_min(1e-12))).item(),
+        "direction_accuracy": direction_accuracy.item(),
+        "majority_direction_accuracy": majority_accuracy.item(),
+        "direction_accuracy_lift_pp": (
+            100 * (direction_accuracy - majority_accuracy)).item(),
         "direction_brier": (sums["brier"] / count).item(),
-        "actual_up_rate": (sums["positive"] / count).item(),
+        "prevalence_brier": (up_rate * (1 - up_rate)).item(),
+        "actual_up_rate": up_rate.item(),
         "predicted_up_probability": (sums["predicted_positive"] / count).item(),
         "predicted_magnitude_std_pct": torch.sqrt(variance).item(),
     }

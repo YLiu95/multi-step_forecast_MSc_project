@@ -221,3 +221,25 @@ one controlled change set rather than tuning against 800 validation examples.
 - Observation: train loss 2.27379; validation loss 2.47540; direction accuracy 0.544; magnitude MAE 370.0 bp; peak allocated VRAM 12.41 GB on rank 0.
 - Action: No automatic hyperparameter change; continue collecting comparable validation points.
 - Lesson: Decisions require validation trends, not training loss alone.
+
+## Iteration 3: Early Stop and Final Test
+
+- Observation: Combined validation loss reached its minimum of `2.43828` at
+  epoch 9. It then rose to `2.47540` by epoch 21, while training loss remained
+  lower. Magnitude MAE also worsened from `364.6` to `370.0` basis points.
+- Observation: Direction accuracy continued increasing after epoch 9, reaching
+  `0.544` at epoch 21, but the magnitude task carries 70% of the combined loss.
+  This is a real multi-task trade-off, not evidence that early stopping failed.
+- Action: Early stopping ended training after 12 non-improving epochs and kept
+  epoch 9 as the best combined model. Do not resume the epoch-21 optimizer.
+- Observation: On 12,800 untouched test samples, epoch 9 achieved magnitude MAE
+  `336.1` bp versus `520.9` bp for a zero-magnitude prediction, a 35.48%
+  improvement. Direction accuracy was `53.84%` versus a `53.05%` majority-class
+  baseline, a modest `+0.79` percentage-point lift. Brier score improved from
+  `0.24907` to `0.24861`.
+- Decision: Accept epoch 9 as the final experiment 1.1 model. Do not change loss
+  weights or hyperparameters after seeing test results; that would leak test
+  information into model selection.
+- Lesson: Multi-task models can improve one task while the weighted objective
+  worsens. Choose the checkpoint using the declared validation objective, then
+  report each task against a naive baseline on test exactly once.

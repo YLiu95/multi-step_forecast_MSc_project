@@ -1,0 +1,25 @@
+{
+  "split": "test",
+  "checkpoint": "best.pt",
+  "checkpoint_epoch": 9,
+  "batches_per_rank": 80,
+  "metrics": {
+    "magnitude_mae_pct": 3.3610851764678955,
+    "magnitude_mae_bp": 336.1085205078125,
+    "magnitude_rmse_pct": 6.906829357147217,
+    "zero_magnitude_mae_bp": 520.9046630859375,
+    "zero_magnitude_rmse_pct": 9.040196418762207,
+    "magnitude_mae_improvement_vs_zero_pct": 35.47600555419922,
+    "direction_accuracy": 0.5383594036102295,
+    "majority_direction_accuracy": 0.530468761920929,
+    "direction_accuracy_lift_pp": 0.7890641689300537,
+    "direction_brier": 0.24860744178295135,
+    "prevalence_brier": 0.2490716576576233,
+    "actual_up_rate": 0.530468761920929,
+    "predicted_up_probability": 0.5266646146774292,
+    "predicted_magnitude_std_pct": 2.3273580074310303,
+    "loss": 2.2409368865191936,
+    "magnitude_loss": 2.9054654121398924,
+    "direction_loss": 0.6903703484684229
+  }
+}

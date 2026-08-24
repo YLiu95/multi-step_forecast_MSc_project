@@ -290,6 +290,7 @@ new_experiment_1.1/
     ├── dataset.py         GPU-resident balanced basket sampler
     ├── download.py        universe, target strata, adjusted-close chunks
     ├── engine.py          DDP training, validation, EMA, resume
+   ├── evaluate.py        one-time validation or held-out test evaluation
     ├── hub.py             GitHub and Hugging Face clients
     ├── losses.py          weighted dual loss and metrics
     ├── model.py           hierarchical Patch Transformer
@@ -359,3 +360,29 @@ The necessary adjustments were:
 
 The next decision should come from several full validation points recorded in
 `selfevo_process.md`, not from adding more architecture in advance.
+
+## 13. Final Result
+
+Training stopped at epoch 21 after 12 epochs without improving the combined
+validation loss. The selected checkpoint is **epoch 9**, not the final epoch.
+
+Run the deterministic final evaluation with:
+
+```bash
+torchrun --standalone --nproc_per_node=2 -m src.evaluate \
+   --split test --batches 80
+```
+
+This evaluates 12,800 fixed test baskets across two GPUs.
+
+| Test metric | Best model | Naive baseline | Improvement |
+|---|---:|---:|---:|
+| Magnitude MAE | 336.1 bp | 520.9 bp (predict zero) | 35.48% lower |
+| Magnitude RMSE | 6.91% | 9.04% (predict zero) | 2.13 percentage points lower |
+| Direction accuracy | 53.84% | 53.05% (always predict majority) | +0.79 pp |
+| Direction Brier | 0.24861 | 0.24907 (predict prevalence) | 0.00046 lower |
+
+The magnitude result is clearly better than the zero baseline. The direction
+result is positive but small; it should be described as a modest edge, not a
+high-confidence trading result. No hyperparameter was changed after observing
+test metrics because doing so would turn the test set into a tuning set.
