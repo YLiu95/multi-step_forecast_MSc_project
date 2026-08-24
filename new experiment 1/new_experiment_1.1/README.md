@@ -310,6 +310,17 @@ Large files stay outside Git:
 
 ## 11. Backups and Recovery
 
+The two services have exclusive responsibilities. The same file is never
+backed up to both places:
+
+| Destination | Files stored there | Files explicitly excluded |
+|---|---|---|
+| GitHub | source code, tests, Markdown, requirements, target manifest, resolved config, JSONL history | model and optimizer checkpoints |
+| Hugging Face | `.pt` periodic checkpoints and best model weights only | code, documentation, config, target manifest, TensorBoard events, and history |
+
+`HFBackup.upload` enforces this policy in code: it rejects non-`.pt` files and
+any destination outside `checkpoints/` or `best model/`.
+
 Every five epochs, rank 0:
 
 1. uploads a full checkpoint to

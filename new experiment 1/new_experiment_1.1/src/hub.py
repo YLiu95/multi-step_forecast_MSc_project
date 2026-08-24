@@ -49,6 +49,12 @@ class HFBackup:
     def upload(self, local: str | Path, remote: str, message: str) -> str:
         if not self.enabled:
             return "Hugging Face backup disabled (token unavailable)"
+        local = Path(local)
+        allowed_remote = ("/checkpoints/" in f"/{remote}"
+                          or "/best model/" in f"/{remote}")
+        if local.suffix != ".pt" or not allowed_remote:
+            return ("Hugging Face upload rejected: only .pt files under "
+                    "checkpoints/ or best model/ are allowed")
         started = time.time()
         try:
             self.api.upload_file(path_or_fileobj=str(local), path_in_repo=remote,
@@ -77,6 +83,8 @@ class HFBackup:
 
 
 class GitBackup:
+    """Back up code, documentation, configuration, and text logs to GitHub."""
+
     def __init__(self, repo_dir: str | Path, remote: str):
         self.repo_dir = Path(repo_dir)
         self.remote = remote
