@@ -295,50 +295,76 @@ to zero, then divides it out before the optimiser step.
 
 ## 7. Monitoring with TensorBoard
 
-One method. Verified working on this machine.
+**The VS Code PORTS panel does not work on this Kaggle box.** It was tried on ports
+6006, 6007 and 16006 and failed every time with *"Unable to forward localhost:PORT.
+The host may not be available or that remote port may already be forwarded."*
 
-### Step 1 — start the server in a VS Code terminal
+That message is misleading. The host **is** available — verified each time with
+`curl` returning HTTP 200 and a valid run list, and confirmed with a control
+`python3 -m http.server` on an unrelated port. The failure is in the
+`code tunnel` forwarding layer (this box runs `code tunnel --name kaggle-gpu`),
+and it cannot be fixed from inside the container.
+
+Use the method below instead. It needs only **outbound** HTTPS, which Kaggle allows.
+
+### Step 1 — start TensorBoard
 
 ```bash
 tensorboard --logdir /root/artifacts/runs --host 0.0.0.0 --port 16006 --reload_multifile=true
 ```
 
-Leave it in the foreground — do **not** background it with `&`. Three details matter:
-
 | Flag | Why |
 |---|---|
 | `--logdir /root/artifacts/runs` | The **parent** directory, so every run past and present lands on the same axes. Pointing at `runs/<name>/tb` shows one run and often "No dashboards are active". |
-| `--host 0.0.0.0` | Forces an explicit IPv4 socket. `--bind_all` produces a dual-stack socket the tunnel forwards less reliably. |
-| `--port 16006` | High and uncommon. `6006` is frequently already taken — by a stale tunnel forward, or by something on **your own laptop** (VS Code maps remote `6006` → local `6006`, and a local conflict yields the same *"may already be forwarded"* error). |
+| `--host 0.0.0.0` | Explicit IPv4 socket. |
+| `--port 16006` | High and uncommon, so nothing else collides with it. |
 
-Wait ~30 s for `TensorBoard 2.20.0 at http://0.0.0.0:16006/`.
-
-### Step 2 — forward the port
-
-1. Open the **PORTS** panel (tab beside TERMINAL, or `Ctrl+Shift+P` →
-   `Ports: Focus on Ports View`).
-2. **Forward a Port** → type `16006` → Enter.
-3. Click the 🌐 globe icon in the **Forwarded Address** column.
-
-### Never browse to the URL TensorBoard prints
-
-`http://0.0.0.0:16006/` and `http://<container-hostname>:16006/` **will never load.**
-`0.0.0.0` is a bind address, not something you can visit, and the container hostname
-is not resolvable from your browser. Only the forwarded `devtunnels.ms` link works.
-
-### If it still fails, check the server before blaming the browser
+Wait ~30 s, then confirm it is genuinely up **before** touching a browser:
 
 ```bash
 curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:16006/   # want 200
 curl -s http://127.0.0.1:16006/data/runs                           # want ["<run>/tb", ...]
 ```
 
+### Step 2 — expose it with a cloudflared quick tunnel
+
+```bash
+# one-off install
+curl -fsSL -o /usr/local/bin/cloudflared \
+  https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+chmod +x /usr/local/bin/cloudflared
+
+# start the tunnel
+cloudflared tunnel --url http://127.0.0.1:16006 --no-autoupdate
+```
+
+It prints a public URL like `https://<random-words>.trycloudflare.com`. Open that
+in any browser. To run it in the background and read the URL back:
+
+```bash
+nohup cloudflared tunnel --url http://127.0.0.1:16006 --no-autoupdate \
+      > /root/artifacts/cloudflared.log 2>&1 &
+sleep 20
+grep -oE "https://[a-z0-9-]+\.trycloudflare\.com" /root/artifacts/cloudflared.log | head -1
+```
+
+> **Security.** A quick tunnel is **public to anyone holding the URL** — random and
+> unguessable, but unauthenticated. It exposes only training curves: no data, no
+> credentials, no checkpoints. Shut it down when you are finished:
+>
+> ```bash
+> pkill -f cloudflared
+> ```
+
+### If something breaks
+
 | Result | Meaning |
 |---|---|
-| `200` + run list | Server is fine; the forward is the problem. Try `16007`, and right-click → **Stop Forwarding Port** on any stale entry. |
-| `000` | Not up yet or crashed — wait 30 s, then read the terminal output. |
-| `200` but `[]` | Wrong `--logdir`; it found no `events.out.tfevents.*` files. |
+| `curl` gives `200` + run list | Server fine; the problem is the tunnel. Restart `cloudflared`. |
+| `curl` gives `000` | TensorBoard is not up yet or crashed — wait 30 s, then read its terminal output. |
+| `200` but `[]` | Wrong `--logdir`; no `events.out.tfevents.*` found. |
 | `could not bind to port` | One is already running: `pkill -f tensorboard`, then restart. |
+| Browsing `http://0.0.0.0:16006/` fails | Expected. `0.0.0.0` is a *bind* address, and the container hostname is not resolvable from your browser. Only the `trycloudflare.com` URL works. |
 
 ### What to look at, in order of usefulness
 

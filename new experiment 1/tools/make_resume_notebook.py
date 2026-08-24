@@ -239,33 +239,37 @@ md(r"""
 <a id="c4"></a>
 ## 4. Open TensorBoard
 
-One method. Verified working on this machine.
+> **The VS Code PORTS panel does not work on this Kaggle box.** Ports 6006/6007/16006 all fail
+> with *"Unable to forward localhost:PORT"* even though `curl` confirms the server returns
+> HTTP 200. The break is in the `code tunnel` forwarding layer, not in TensorBoard.
+> Use a cloudflared quick tunnel, which needs only outbound HTTPS.
 
-### Step 1 — start the server in a VS Code terminal
+### Step 1 - start TensorBoard
 ```bash
 tensorboard --logdir /root/artifacts/runs --host 0.0.0.0 --port 16006 --reload_multifile=true
 ```
-Leave it in the foreground (no `&`). `--logdir` must be the **parent** `runs/` directory so
-every run appears on the same axes. `--host 0.0.0.0` forces an IPv4 socket, which the tunnel
-forwards more reliably than `--bind_all`. Port `16006` avoids the very common `6006` clash.
-
-Wait ~30 s for `TensorBoard 2.20.0 at http://0.0.0.0:16006/`.
-
-### Step 2 — forward the port
-**PORTS** panel (tab beside TERMINAL) → **Forward a Port** → `16006` → click the 🌐 globe icon.
-
-> **Never browse to the URL TensorBoard prints.** `http://0.0.0.0:16006/` is a *bind* address,
-> and the container hostname is not resolvable from your browser. Only the forwarded
-> `devtunnels.ms` link works.
-
-### If it fails, check the server before blaming the browser
+`--logdir` must be the **parent** `runs/` directory so every run shares the same axes.
+Verify before opening a browser:
 ```bash
 curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:16006/   # want 200
-curl -s http://127.0.0.1:16006/data/runs                           # want ["<run>/tb", ...]
+curl -s http://127.0.0.1:16006/data/runs                            # want ["<run>/tb", ...]
 ```
-`200` plus a run list means the server is fine and the *forward* is the problem — try `16007`
-and right-click → **Stop Forwarding Port** on any stale entry. `could not bind` means one is
-already running: `!pkill -f tensorboard`.
+
+### Step 2 - expose it
+```bash
+curl -fsSL -o /usr/local/bin/cloudflared \
+  https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+chmod +x /usr/local/bin/cloudflared
+nohup cloudflared tunnel --url http://127.0.0.1:16006 --no-autoupdate \
+      > /root/artifacts/cloudflared.log 2>&1 &
+sleep 20
+grep -oE "https://[a-z0-9-]+\.trycloudflare\.com" /root/artifacts/cloudflared.log | head -1
+```
+Open the printed URL. **It is public to anyone holding it** (unauthenticated, but random and
+unguessable) and exposes only training curves. Shut it down with `!pkill -f cloudflared`.
+
+Never browse to `http://0.0.0.0:16006/` or the container hostname - `0.0.0.0` is a *bind*
+address and the hostname is not resolvable from your browser.
 
 **A resumed run continues the same curves.** `global_step` is restored from the checkpoint, so
 new points land after the old ones instead of restarting from 0. Set `NEW_RUN_NAME` if you want
