@@ -92,7 +92,7 @@ def main(argv=None) -> None:
               f"val {panel.size('val'):,} | test {panel.size('test'):,}", flush=True)
 
     # --------------------------------------------------------------- model --
-    model = build_model(cfg, n_features).to(device)
+    model = build_model(cfg, n_features, tuple(meta["feature_names"])).to(device)
     n_params = model.n_params()
     summary = (f"PatchForecaster | {n_params / 1e6:.1f}M params | "
                f"d_model={cfg.d_model} depth={cfg.depth} heads={cfg.n_heads} "
@@ -101,6 +101,10 @@ def main(argv=None) -> None:
                f"{cfg.n_outputs_per_step})")
     if main_proc:
         print(summary, flush=True)
+        print(f"input reg       : {model.reg.n_disabled} channels disabled "
+              f"{list(cfg.disable_features)} | {model.reg.n_shared} shared channels "
+              f"dropped as a group with p={cfg.shared_group_dropout} | "
+              f"input noise {cfg.input_noise}", flush=True)
 
     if cfg.compile_model:
         try:

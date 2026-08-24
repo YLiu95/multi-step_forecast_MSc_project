@@ -57,12 +57,21 @@ class Config:
     # under fp16 AMP while leaving headroom for a large batch.
     patch_len: int = 8
     patch_stride: int = 8
-    d_model: int = 512
-    n_heads: int = 8
-    d_ff: int = 2048
-    depth: int = 12
-    dropout: float = 0.1
-    head_dropout: float = 0.1
+    d_model: int = 384
+    n_heads: int = 6
+    d_ff: int = 1536
+    depth: int = 8
+    dropout: float = 0.2
+    head_dropout: float = 0.2
+
+    # ------------------------------------------------- anti-memorisation -- #
+    # The market/calendar channels are identical for every ticker on a given
+    # day, so a look-back window of them fingerprints the DATE. With only
+    # ~7,300 distinct training dates a large model memorises the date -> future
+    # mapping outright. These three knobs break that shortcut.
+    disable_features: tuple[str, ...] = ("dow", "month_sin", "month_cos")
+    shared_group_dropout: float = 0.5   # blank ALL shared channels, per sample
+    input_noise: float = 0.05           # gaussian jitter on the inputs
 
     # ---------------------------------------------------------------- loss  #
     loss: str = "huber"                    # 'huber' | 'mse' | 'quantile'
@@ -79,9 +88,9 @@ class Config:
     steps_per_epoch: int = 500             # per rank; an "epoch" is a fixed budget
     val_batches: int = 60                  # per rank
     batch_size: int = 1024                 # per GPU
-    lr: float = 4e-4                       # scaled up for the 2048 effective batch
+    lr: float = 2e-4                       # lowered after the baseline overfit
     min_lr_frac: float = 0.02
-    weight_decay: float = 0.05
+    weight_decay: float = 0.15             # raised for the same reason
     warmup_epochs: int = 2
     grad_clip: float = 1.0
     accum_steps: int = 1

@@ -242,24 +242,30 @@ md(r"""
 `TB_LOGDIR` points at the **parent** `runs/` directory, so TensorBoard shows every run — the
 one you are resuming *and* every past one — on the same axes.
 
-### Option A — terminal + the VS Code PORTS panel (works everywhere)
+### Option A — terminal + the VS Code PORTS panel
 ```bash
-tensorboard --logdir /root/artifacts/runs --port 6006 --bind_all
+tensorboard --logdir /root/artifacts/runs --host 0.0.0.0 --port 6007 --reload_multifile=true
 ```
-Then open the **PORTS** panel in VS Code (the tab next to TERMINAL) and click the 🌐 globe icon
-on port `6006`. If it is not listed, click **Forward a Port** and enter `6006`.
+`--host 0.0.0.0` forces an explicit IPv4 socket, which the tunnel forwards more reliably than
+`--bind_all`. Give it ~20 s to bind, then check it before blaming the browser:
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:6007/   # want 200
+curl -s http://127.0.0.1:6007/data/runs                           # want ["<run>/tb", ...]
+```
+Then: **PORTS** panel → **Forward a Port** → `6007` → click the 🌐 globe icon.
 
-### Option B — inline (run the next cell)
+### Option B — offline, no server at all (most reliable here)
+Section 5 below reads the event files directly and plots them with matplotlib. On a Kaggle box
+behind a VS Code tunnel this is the option that always works.
 
-### Option C — Command Palette (needs an extension first)
-`Python: Launch TensorBoard` **does not exist by default** — Microsoft moved it out of the
-Python extension. Install **`ms-toolsai.tensorboard`** (`Ctrl+Shift+X`, search `tensorboard`)
-and only then will `Ctrl+Shift+P` → `Python: Launch TensorBoard` → *Select another folder* →
-`/root/artifacts/runs` work.
+### Three traps
+| Trap | Why |
+|---|---|
+| `http://13badd4b8d84:6006/` | That is the **container's internal hostname** — your browser cannot resolve it. Ignore the URL TensorBoard prints. |
+| VS Code: *"that remote port may already be forwarded"* | Stale tunnel registration. Do not fight it — use a different port. |
+| `Ctrl+Shift+P` → `Python: Launch TensorBoard` | **Does not exist by default.** Install the `ms-toolsai.tensorboard` extension first, or use Option B. |
 
-> **Already in use?** `TensorBoard could not bind to port 6006` just means one is already
-> running. Check what it is serving with `!curl -s localhost:6006/data/runs`, or free the port
-> with `!pkill -f tensorboard`, or pass `--port 6007`.
+> **Already in use?** `!pgrep -af tensorboard` to see it, `!pkill -f tensorboard` to clear it.
 
 > **A resumed run continues the same curves.** `global_step` is restored from the checkpoint,
 > so the new points land after the old ones instead of overwriting them from step 0. If you set
@@ -275,9 +281,27 @@ md(r"""
 <a id="c5"></a>
 ## 5. Visualise current and past runs
 
-Reads every `runs/*/history.jsonl` and overlays them. This works even while training is
-writing, because the history file is append-only JSON lines.
+This reads the TensorBoard **event files** directly and plots them with matplotlib, so it needs
+no server, no port and no tunnel forwarding. It is the reliable way to compare runs here.
 """)
+
+code(r'''
+import matplotlib.pyplot as plt
+from src.dashboard import read_runs, summary_table, plot_runs
+
+runs = read_runs(str(RUNS_DIR))
+print("runs found:", {k: f"{len(v)} scalar tags" for k, v in runs.items()}, "\n")
+
+table = summary_table(runs)
+if len(table):
+    print(table.to_string(index=False, float_format=lambda v: f"{v:,.5f}"))
+    print("\n  r2 > 0 and rank_ic > 0.02 = real signal.")
+    print("  std_ratio near 0 = the model collapsed to predicting ~zero.")
+else:
+    print("no validation epochs logged yet")
+
+plot_runs(runs, smooth=3);
+''')
 
 code(r'''
 import pandas as pd

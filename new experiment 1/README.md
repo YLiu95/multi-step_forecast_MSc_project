@@ -97,13 +97,58 @@ cap**, i.e. the card is running as hard as it physically can.
 Patching also cuts attention cost from `O(256²)` to `O(32²)` — a 64× saving
 that is what makes a 12-layer model affordable.
 
-### 2.3 Robust loss
+### 2.4 The date fingerprint — found by running the experiment
 
-Daily returns are heavy-tailed. MSE squares a 10-sigma earnings gap, so a
-handful of days can dominate the gradient. We default to **Huber** (quadratic
-near zero, linear in the tails) and ship **quantile / pinball** loss behind a
-config flag, which predicts the 10th/50th/90th percentile and gives an honest
-uncertainty band instead of a false point estimate.
+The first full run overfit immediately, and the reason turned out to be a flaw in
+**my own feature design**. It is the most instructive result in the project.
+
+| epoch | train | val | `r2_vs_zero` | `rank_ic` |
+|---|---|---|---|---|
+| 1 | 0.376 | 0.4444 | −0.006 | **+0.032** |
+| 2 | 0.337 | 0.4484 | −0.014 | +0.009 |
+| 3 | 0.326 | **0.4537** | −0.025 | **−0.006** |
+
+Training loss fell monotonically while validation loss rose monotonically and
+`rank_ic` decayed to *worse than random*. With 7.15 M samples against 38 M
+parameters that should not happen — so the sample count had to be a lie.
+
+It was. Seven of the eighteen channels are **identical for every ticker on a
+given day**:
+
+```
+mkt_ret  mkt_mom20  breadth  dispersion  dow  month_sin  month_cos
+```
+
+Measured on 2017-10-11, across the 1,813 tickers listed that day, the
+cross-sectional standard deviation of each of those channels is exactly `0.000`.
+
+So a 256-day window of those channels is a **unique fingerprint of the date**.
+And there are only **7,307 distinct training dates**, each shared by ~979
+tickers who also share the same future market move. The model does not need to
+learn market dynamics at all — it learns *"this window is October 2017"* and
+recalls what happened next. Training loss collapses; nothing generalises.
+
+> **The general lesson.** "Number of training samples" is not the same as
+> "number of *independent* training samples". Any feature that is constant
+> across your cross-section reduces the effective sample count along that
+> pathway to the number of distinct timestamps. Always ask what the model
+> *could* memorise, not just how many rows you have.
+
+Three defences, all training-time only, in `InputRegulariser` (`src/model.py`):
+
+| Defence | Config | What it does |
+|---|---|---|
+| Disable pure date IDs | `disable_features` | `dow`, `month_sin`, `month_cos` are almost all fingerprint and almost no signal — zeroed permanently |
+| **Shared-group dropout** | `shared_group_dropout=0.5` | Blanks the *entire* shared group for a random half of samples. Dropping channels *independently* would leave enough fingerprint to still identify the date — it must be the whole group, one Bernoulli draw per sample |
+| Input noise | `input_noise=0.05` | Jitters inputs so an exact window cannot be matched to an exact date |
+
+The model was also cut from 38.2 M to 14.5 M parameters (`d_model` 512→384,
+depth 12→8), `lr` 4e-4→2e-4 and `weight_decay` 0.05→0.15, with the batch raised
+1024→2048 to keep both GPUs saturated at the smaller model size.
+
+The overfitting run is preserved as **`baseline_no_reg`** so the two curves
+overlay in TensorBoard. That comparison is a genuine ablation and belongs in the
+writeup.
 
 ---
 

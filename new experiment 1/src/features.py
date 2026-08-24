@@ -44,6 +44,24 @@ FEATURE_NAMES = (
     "dow", "month_sin", "month_cos",
 )
 
+# Channels that are byte-identical for every ticker on a given day.
+#
+# These carry real information (market beta, regime), but they are also a
+# LIABILITY: a 256-day window of them uniquely identifies the DATE. There are
+# only ~7,300 distinct training dates, and all ~1,000 tickers sharing a date
+# also share the same future market move. A large model therefore memorises
+# "this window is October 2017" and recalls what happened next -- which looks
+# like learning on the training set and generalises to nothing.
+#
+# `Config.shared_group_dropout` randomly blanks this whole group during
+# training so the model cannot build a strategy on the fingerprint.
+SHARED_FEATURES = ("mkt_ret", "mkt_mom20", "breadth", "dispersion",
+                   "dow", "month_sin", "month_cos")
+
+# Pure date identifiers: essentially no predictive value, maximum fingerprint.
+# Disabled by default via `Config.disable_features`.
+CALENDAR_FEATURES = ("dow", "month_sin", "month_cos")
+
 
 def _df(arr: np.ndarray, dates: pd.DatetimeIndex) -> pd.DataFrame:
     """(tickers, days) array -> (days, tickers) frame so pandas can roll it."""

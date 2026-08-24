@@ -86,15 +86,79 @@ class EncoderBlock(nn.Module):
         return x + self.drop(self.ff(self.n2(x)))
 
 
+class InputRegulariser(nn.Module):
+    """Break the date-fingerprint shortcut before the model can exploit it.
+
+    Seven of the eighteen channels (market context + calendar) are identical for
+    every ticker on a given day, so a 256-day window of them identifies the date
+    exactly. There are only ~7,300 training dates and ~1,000 tickers share each
+    one, so memorising `date -> future market move` drives the training loss
+    down fast and generalises to nothing. That is precisely what the first
+    baseline run did: train 0.376 -> 0.326 while val rose 0.444 -> 0.454 and
+    rank_ic fell from +0.032 to negative.
+
+    Three defences, all training-time only:
+
+    * `disable_features` permanently zeroes pure date identifiers (day-of-week,
+      month) which are almost all fingerprint and almost no signal.
+    * `shared_group_dropout` blanks the *entire* shared group for a random half
+      of samples. The model must therefore be able to forecast from the
+      ticker's own history alone, and can only use market context as a weak
+      prior on top.
+    * `input_noise` jitters the inputs so an exact window cannot be matched to
+      an exact date.
+    """
+
+    def __init__(self, cfg: Config, feature_names: tuple[str, ...]):
+        super().__init__()
+        from .features import SHARED_FEATURES
+
+        self.p_group = cfg.shared_group_dropout
+        self.noise = cfg.input_noise
+
+        keep = torch.ones(len(feature_names))
+        for i, n in enumerate(feature_names):
+            if n in set(cfg.disable_features):
+                keep[i] = 0.0
+        shared = torch.zeros(len(feature_names))
+        for i, n in enumerate(feature_names):
+            if n in set(SHARED_FEATURES) and keep[i] > 0:
+                shared[i] = 1.0
+        self.register_buffer("keep", keep.view(1, 1, -1))
+        self.register_buffer("shared", shared.view(1, 1, -1))
+        self.n_disabled = int((keep == 0).sum())
+        self.n_shared = int(shared.sum())
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = x * self.keep
+        if not self.training:
+            return x
+        if self.p_group > 0 and self.n_shared:
+            # one Bernoulli draw per SAMPLE, applied to the whole shared group -
+            # dropping channels independently would leave enough of the
+            # fingerprint intact to still identify the date.
+            b = x.shape[0]
+            drop = (torch.rand(b, 1, 1, device=x.device) < self.p_group).float()
+            x = x * (1.0 - drop * self.shared)
+        if self.noise > 0:
+            x = x + torch.randn_like(x) * self.noise
+        return x
+
+
 class PatchForecaster(nn.Module):
     """(B, L, F) -> (B, H) point forecast, or (B, H, Q) quantile forecast."""
 
-    def __init__(self, cfg: Config, n_features: int):
+    def __init__(self, cfg: Config, n_features: int,
+                 feature_names: tuple[str, ...] | None = None):
         super().__init__()
         self.cfg = cfg
         self.n_out = cfg.n_outputs_per_step
         self.horizon = cfg.n_steps_out
 
+        if feature_names is None:
+            from .features import FEATURE_NAMES
+            feature_names = FEATURE_NAMES
+        self.reg = InputRegulariser(cfg, tuple(feature_names))
         self.embed = PatchEmbed(cfg, n_features)
         self.blocks = nn.ModuleList(EncoderBlock(cfg) for _ in range(cfg.depth))
         self.norm = nn.LayerNorm(cfg.d_model)
@@ -128,7 +192,7 @@ class PatchForecaster(nn.Module):
             nn.init.zeros_(m.bias)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        h = self.embed(x)
+        h = self.embed(self.reg(x))
         for blk in self.blocks:
             h = blk(h)
         h = self.norm(h).flatten(1)
@@ -156,5 +220,6 @@ class PatchForecaster(nn.Module):
                 {"params": no_decay, "weight_decay": 0.0}]
 
 
-def build_model(cfg: Config, n_features: int) -> PatchForecaster:
-    return PatchForecaster(cfg, n_features)
+def build_model(cfg: Config, n_features: int,
+                feature_names: tuple[str, ...] | None = None) -> PatchForecaster:
+    return PatchForecaster(cfg, n_features, feature_names)
