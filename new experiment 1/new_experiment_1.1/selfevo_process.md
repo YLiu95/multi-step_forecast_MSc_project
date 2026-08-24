@@ -95,3 +95,33 @@ one controlled change set rather than tuning against 800 validation examples.
 - Observation: train loss 2.40153; validation loss 2.82465; direction accuracy 0.498; magnitude MAE 419.1 bp; peak allocated VRAM 12.28 GB on rank 0.
 - Action: No automatic hyperparameter change; continue collecting comparable validation points.
 - Lesson: Decisions require validation trends, not training loss alone.
+
+## Epoch 1
+
+- Observation: train loss 2.52148; validation loss 2.98761; direction accuracy 0.505; magnitude MAE 442.3 bp; peak allocated VRAM 12.28 GB on rank 0.
+- Action: Keep the initial settings until a trend is visible; one epoch is not evidence for retuning.
+- Lesson: Decisions require validation trends, not training loss alone.
+
+## Epoch 2
+
+- Observation: train loss 2.38089; validation loss 2.72217; direction accuracy 0.517; magnitude MAE 404.6 bp; peak allocated VRAM 12.28 GB on rank 0.
+- Action: No automatic hyperparameter change; continue collecting comparable validation points.
+- Lesson: Decisions require validation trends, not training loss alone.
+
+## Epoch 3
+
+- Observation: train loss 2.34806; validation loss 2.59145; direction accuracy 0.522; magnitude MAE 385.9 bp; peak allocated VRAM 12.28 GB on rank 0.
+- Action: No automatic hyperparameter change; continue collecting comparable validation points.
+- Lesson: Decisions require validation trends, not training loss alone.
+
+## Epoch 4
+
+- Observation: train loss 2.38750; validation loss 2.51974; direction accuracy 0.526; magnitude MAE 375.8 bp; peak allocated VRAM 12.28 GB on rank 0.
+- Action: No automatic hyperparameter change; continue collecting comparable validation points.
+- Lesson: Decisions require validation trends, not training loss alone.
+
+## Epoch 5
+
+- Observation: train loss 2.33307; validation loss 2.46900; direction accuracy 0.523; magnitude MAE 368.7 bp; peak allocated VRAM 12.28 GB on rank 0.
+- Action: No automatic hyperparameter change; continue collecting comparable validation points.
+- Lesson: Decisions require validation trends, not training loss alone.
