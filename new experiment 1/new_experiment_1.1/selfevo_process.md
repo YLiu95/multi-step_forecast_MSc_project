@@ -215,3 +215,9 @@ one controlled change set rather than tuning against 800 validation examples.
 - Observation: train loss 2.28603; validation loss 2.47227; direction accuracy 0.543; magnitude MAE 369.5 bp; peak allocated VRAM 12.41 GB on rank 0.
 - Action: No automatic hyperparameter change; continue collecting comparable validation points.
 - Lesson: Decisions require validation trends, not training loss alone.
+
+## Epoch 21
+
+- Observation: train loss 2.27379; validation loss 2.47540; direction accuracy 0.544; magnitude MAE 370.0 bp; peak allocated VRAM 12.41 GB on rank 0.
+- Action: No automatic hyperparameter change; continue collecting comparable validation points.
+- Lesson: Decisions require validation trends, not training loss alone.
