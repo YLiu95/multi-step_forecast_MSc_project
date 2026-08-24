@@ -125,3 +125,33 @@ one controlled change set rather than tuning against 800 validation examples.
 - Observation: train loss 2.33307; validation loss 2.46900; direction accuracy 0.523; magnitude MAE 368.7 bp; peak allocated VRAM 12.28 GB on rank 0.
 - Action: No automatic hyperparameter change; continue collecting comparable validation points.
 - Lesson: Decisions require validation trends, not training loss alone.
+
+## Epoch 6
+
+- Observation: train loss 2.32781; validation loss 2.44325; direction accuracy 0.527; magnitude MAE 365.2 bp; peak allocated VRAM 12.41 GB on rank 0.
+- Action: No automatic hyperparameter change; continue collecting comparable validation points.
+- Lesson: Decisions require validation trends, not training loss alone.
+
+## Epoch 7
+
+- Observation: train loss 2.37249; validation loss 2.44170; direction accuracy 0.530; magnitude MAE 365.0 bp; peak allocated VRAM 12.41 GB on rank 0.
+- Action: No automatic hyperparameter change; continue collecting comparable validation points.
+- Lesson: Decisions require validation trends, not training loss alone.
+
+## Epoch 8
+
+- Observation: train loss 2.35134; validation loss 2.43850; direction accuracy 0.531; magnitude MAE 364.6 bp; peak allocated VRAM 12.41 GB on rank 0.
+- Action: No automatic hyperparameter change; continue collecting comparable validation points.
+- Lesson: Decisions require validation trends, not training loss alone.
+
+## Epoch 9
+
+- Observation: train loss 2.30687; validation loss 2.43828; direction accuracy 0.533; magnitude MAE 364.6 bp; peak allocated VRAM 12.41 GB on rank 0.
+- Action: No automatic hyperparameter change; continue collecting comparable validation points.
+- Lesson: Decisions require validation trends, not training loss alone.
+
+## Epoch 10
+
+- Observation: train loss 2.31148; validation loss 2.44158; direction accuracy 0.535; magnitude MAE 365.1 bp; peak allocated VRAM 12.41 GB on rank 0.
+- Action: No automatic hyperparameter change; continue collecting comparable validation points.
+- Lesson: Decisions require validation trends, not training loss alone.
