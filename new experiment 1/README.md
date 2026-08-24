@@ -288,6 +288,23 @@ nohup tensorboard --logdir /root/artifacts/runs --port 6006 --bind_all \
       > /root/artifacts/tensorboard.log 2>&1 &
 ```
 
+### TensorBoard troubleshooting
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| `TensorBoard could not bind to port 6006, it was already in use` | An instance is already running — very likely serving what you want | `curl -s localhost:6006/data/runs` to see what it has. Reuse it, or restart: `pkill -f "tensorboard.*6006"` then relaunch. Or just pick another port: `--port 6007` |
+| Page loads but says **"No dashboards are active"** | Pointed at a run directory instead of the parent, **or** the log directory was deleted and recreated after TensorBoard started (it holds stale inodes) | Use `/root/artifacts/runs`, not `.../runs/<name>/tb`. If the path is right, restart TensorBoard |
+| Scalars stop updating mid-run | Event file cached | Add `--reload_multifile=true`, or use the ⟳ refresh control (top right) |
+| Port 6006 not in the VS Code **PORTS** panel | Not auto-detected | Click **Forward a Port** and enter `6006` |
+
+Verify from the shell that it can actually see your run:
+
+```bash
+curl -s localhost:6006/data/runs          # -> ["patchtst_us_equities_v1/tb"]
+```
+
+An empty `[]` means TensorBoard found no event files — check the `--logdir` path.
+
 ### What to look at, in order of usefulness
 
 | Tab / scalar | What it tells you |

@@ -62,6 +62,7 @@
   "hf_best_dir": "best model",
   "github_repo": "YLiu95/multi-step_forecast_MSc_project",
   "github_subdir": "new experiment 1",
+  "notebook_dir": "/root",
   "artifact_root": "/root/artifacts",
   "feature_names": []
 }

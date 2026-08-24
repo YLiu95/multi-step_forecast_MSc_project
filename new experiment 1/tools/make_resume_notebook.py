@@ -438,6 +438,8 @@ md(r"""
 | Loss jumps up right after resuming | The checkpoint had no optimiser state (e.g. you resumed from `best.pt`) | Resume from `latest.pt` or a `ckpt_epoch_*.pt` instead |
 | Run hangs with both GPUs at 0% | A DDP deadlock — one rank exited and the others wait on an all-reduce | `pkill -f src.train` and resume; `src/train.py` broadcasts the stop flag to prevent this |
 | `address already in use` | A previous `torchrun` did not release its port | `torchrun --rdzv-endpoint=localhost:29501 ...` |
+| `TensorBoard could not bind to port 6006` | An instance is already running (probably serving what you want) | `curl -s localhost:6006/data/runs` to check it, or `pkill -f "tensorboard.*6006"` and relaunch, or use `--port 6007` |
+| TensorBoard shows "No dashboards are active" | Pointed at a run dir instead of the parent, or the log dir was deleted/recreated after TensorBoard started | Use `/root/artifacts/runs`; if the path is right, restart TensorBoard |
 | Nothing in TensorBoard | Pointed at a run directory instead of the parent | Use `/root/artifacts/runs`, not `/root/artifacts/runs/<name>/tb` |
 | Local checkpoints gone after a restart | The environment was wiped | Use `CHECKPOINT = "hf:latest.pt"` to pull from Hugging Face |
 | LR barely moves after extending epochs | Cosine had already annealed to `min_lr` | Also set `NEW_LR` |
