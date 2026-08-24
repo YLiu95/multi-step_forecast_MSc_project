@@ -1,0 +1,12 @@
+# Verified working on the Kaggle 2xT4 image (Python 3.12) as of this run.
+# Everything below is preinstalled there; pinned as lower bounds so the code
+# also runs on a fresh machine.
+torch>=2.4
+numpy>=1.26
+pandas>=2.2
+pyarrow>=15
+yfinance>=0.2.60
+scikit-learn>=1.4
+matplotlib>=3.8
+tensorboard>=2.16
+huggingface_hub>=0.26

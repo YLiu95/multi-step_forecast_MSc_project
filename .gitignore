@@ -1,0 +1,12 @@
+# Artefacts live outside the repo (/root/artifacts). These rules are a safety net
+# in case anyone points ARTIFACT_ROOT at the working tree by mistake.
+artifacts/
+*.npy
+*.pt
+*.parquet
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.secrets/
+runs/
+tb/
