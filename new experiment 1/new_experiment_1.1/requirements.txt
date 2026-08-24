@@ -1,0 +1,8 @@
+torch>=2.4
+numpy>=1.26
+pandas>=2.2
+pyarrow>=15
+yfinance>=0.2.60
+lxml>=5.0
+tensorboard>=2.16
+huggingface_hub>=0.26
