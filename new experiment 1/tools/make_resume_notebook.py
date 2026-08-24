@@ -110,7 +110,7 @@ PUSH_TO_HF     = True         # upload checkpoints to YL95/new_experiment_1
 PUSH_TO_GITHUB = True         # commit code + history to the project repo
 
 # ---- 6. TENSORBOARD ---------------------------------------------------------
-TB_PORT        = 6006
+TB_PORT        = 16006
 TB_LOGDIR      = f"{ARTIFACT_ROOT}/runs"   # parent dir -> shows ALL runs together
 
 # =============================================================================
@@ -239,69 +239,46 @@ md(r"""
 <a id="c4"></a>
 ## 4. Open TensorBoard
 
-`TB_LOGDIR` points at the **parent** `runs/` directory, so TensorBoard shows every run — the
-one you are resuming *and* every past one — on the same axes.
+One method. Verified working on this machine.
 
-### Option A — terminal + the VS Code PORTS panel
+### Step 1 — start the server in a VS Code terminal
 ```bash
-tensorboard --logdir /root/artifacts/runs --host 0.0.0.0 --port 6007 --reload_multifile=true
+tensorboard --logdir /root/artifacts/runs --host 0.0.0.0 --port 16006 --reload_multifile=true
 ```
-`--host 0.0.0.0` forces an explicit IPv4 socket, which the tunnel forwards more reliably than
-`--bind_all`. Give it ~20 s to bind, then check it before blaming the browser:
+Leave it in the foreground (no `&`). `--logdir` must be the **parent** `runs/` directory so
+every run appears on the same axes. `--host 0.0.0.0` forces an IPv4 socket, which the tunnel
+forwards more reliably than `--bind_all`. Port `16006` avoids the very common `6006` clash.
+
+Wait ~30 s for `TensorBoard 2.20.0 at http://0.0.0.0:16006/`.
+
+### Step 2 — forward the port
+**PORTS** panel (tab beside TERMINAL) → **Forward a Port** → `16006` → click the 🌐 globe icon.
+
+> **Never browse to the URL TensorBoard prints.** `http://0.0.0.0:16006/` is a *bind* address,
+> and the container hostname is not resolvable from your browser. Only the forwarded
+> `devtunnels.ms` link works.
+
+### If it fails, check the server before blaming the browser
 ```bash
-curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:6007/   # want 200
-curl -s http://127.0.0.1:6007/data/runs                           # want ["<run>/tb", ...]
+curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:16006/   # want 200
+curl -s http://127.0.0.1:16006/data/runs                           # want ["<run>/tb", ...]
 ```
-Then: **PORTS** panel → **Forward a Port** → `6007` → click the 🌐 globe icon.
+`200` plus a run list means the server is fine and the *forward* is the problem — try `16007`
+and right-click → **Stop Forwarding Port** on any stale entry. `could not bind` means one is
+already running: `!pkill -f tensorboard`.
 
-### Option B — offline, no server at all (most reliable here)
-Section 5 below reads the event files directly and plots them with matplotlib. On a Kaggle box
-behind a VS Code tunnel this is the option that always works.
-
-### Three traps
-| Trap | Why |
-|---|---|
-| `http://13badd4b8d84:6006/` | That is the **container's internal hostname** — your browser cannot resolve it. Ignore the URL TensorBoard prints. |
-| VS Code: *"that remote port may already be forwarded"* | Stale tunnel registration. Do not fight it — use a different port. |
-| `Ctrl+Shift+P` → `Python: Launch TensorBoard` | **Does not exist by default.** Install the `ms-toolsai.tensorboard` extension first, or use Option B. |
-
-> **Already in use?** `!pgrep -af tensorboard` to see it, `!pkill -f tensorboard` to clear it.
-
-> **A resumed run continues the same curves.** `global_step` is restored from the checkpoint,
-> so the new points land after the old ones instead of overwriting them from step 0. If you set
-> `NEW_RUN_NAME`, you get a separate curve to compare against instead.
+**A resumed run continues the same curves.** `global_step` is restored from the checkpoint, so
+new points land after the old ones instead of restarting from 0. Set `NEW_RUN_NAME` if you want
+a separate curve to compare against instead.
 """)
-
-code(r'''
-%load_ext tensorboard
-%tensorboard --logdir /root/artifacts/runs --port 6006
-''')
 
 md(r"""
 <a id="c5"></a>
 ## 5. Visualise current and past runs
 
-This reads the TensorBoard **event files** directly and plots them with matplotlib, so it needs
-no server, no port and no tunnel forwarding. It is the reliable way to compare runs here.
+A quick matplotlib summary of every run's `history.jsonl`, so you can compare runs without
+leaving the notebook. TensorBoard (section 4) remains the full view.
 """)
-
-code(r'''
-import matplotlib.pyplot as plt
-from src.dashboard import read_runs, summary_table, plot_runs
-
-runs = read_runs(str(RUNS_DIR))
-print("runs found:", {k: f"{len(v)} scalar tags" for k, v in runs.items()}, "\n")
-
-table = summary_table(runs)
-if len(table):
-    print(table.to_string(index=False, float_format=lambda v: f"{v:,.5f}"))
-    print("\n  r2 > 0 and rank_ic > 0.02 = real signal.")
-    print("  std_ratio near 0 = the model collapsed to predicting ~zero.")
-else:
-    print("no validation epochs logged yet")
-
-plot_runs(runs, smooth=3);
-''')
 
 code(r'''
 import pandas as pd
@@ -321,7 +298,6 @@ def load_histories(runs_dir=RUNS_DIR) -> dict[str, pd.DataFrame]:
         if len(df):
             out[d.name] = df
     return out
-
 hists = load_histories()
 if not hists:
     print("No run history yet. The first epoch appears after ~6 minutes of training.")
@@ -468,9 +444,10 @@ md(r"""
 | Loss jumps up right after resuming | The checkpoint had no optimiser state (e.g. you resumed from `best.pt`) | Resume from `latest.pt` or a `ckpt_epoch_*.pt` instead |
 | Run hangs with both GPUs at 0% | A DDP deadlock — one rank exited and the others wait on an all-reduce | `pkill -f src.train` and resume; `src/train.py` broadcasts the stop flag to prevent this |
 | `address already in use` | A previous `torchrun` did not release its port | `torchrun --rdzv-endpoint=localhost:29501 ...` |
-| `TensorBoard could not bind to port 6006` | An instance is already running (probably serving what you want) | `curl -s localhost:6006/data/runs` to check it, or `pkill -f "tensorboard.*6006"` and relaunch, or use `--port 6007` |
-| TensorBoard shows "No dashboards are active" | Pointed at a run dir instead of the parent, or the log dir was deleted/recreated after TensorBoard started | Use `/root/artifacts/runs`; if the path is right, restart TensorBoard |
-| Nothing in TensorBoard | Pointed at a run directory instead of the parent | Use `/root/artifacts/runs`, not `/root/artifacts/runs/<name>/tb` |
+| `TensorBoard could not bind to port` | One is already running | `!pkill -f tensorboard`, then start it again |
+| VS Code: *"that remote port may already be forwarded"* | Stale tunnel registration, or that port is busy on **your own machine** | Use a different port (`16007`), and right-click → **Stop Forwarding Port** on any stale entry |
+| TensorBoard page will not load | You browsed to the `0.0.0.0` or container-hostname URL it printed | Only the forwarded `devtunnels.ms` link from the PORTS panel works |
+| TensorBoard shows "No dashboards are active" | Pointed at a run dir instead of the parent | Use `/root/artifacts/runs`, not `/root/artifacts/runs/<name>/tb` |
 | Local checkpoints gone after a restart | The environment was wiped | Use `CHECKPOINT = "hf:latest.pt"` to pull from Hugging Face |
 | LR barely moves after extending epochs | Cosine had already annealed to `min_lr` | Also set `NEW_LR` |
 
