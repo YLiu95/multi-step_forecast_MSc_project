@@ -5,6 +5,21 @@ learn from: **2,524 US tickers, 1990–2026, 7.15 million training windows**, a
 **38 M-parameter Transformer**, trained with **DDP across 2× Tesla T4** under
 fp16 mixed precision.
 
+```bash
+cd "/root/new_experiment_1/new experiment 1"
+
+python -m src.prepare_data                                        # build the dataset
+
+PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \
+torchrun --nproc_per_node=2 -m src.train --run-name my_run        # train on both GPUs
+
+tensorboard --logdir /root/artifacts/runs --port 6006 --bind_all  # watch it
+```
+
+**To monitor training, see [§7 Monitoring with TensorBoard](#7-monitoring-with-tensorboard)** —
+in VS Code the quickest route is `Ctrl+Shift+P` → `Python: Launch TensorBoard` →
+*Select another folder* → `/root/artifacts/runs`.
+
 ---
 
 ## 1. Overview
@@ -100,6 +115,8 @@ new experiment 1/
 ├── data prep and train 1.ipynb  <- data walkthrough + launches training
 ├── resume training.ipynb        <- resume from any checkpoint, compare runs
 ├── logs/<run_name>/             <- per-epoch history, committed automatically
+├── tools/
+│   └── make_resume_notebook.py  <- regenerates 'resume training.ipynb'
 └── src/
     ├── config.py       every tunable knob, one dataclass, saved into each checkpoint
     ├── download.py     universe construction + chunked, resumable yfinance download
@@ -229,7 +246,80 @@ to zero, then divides it out before the optimiser step.
 
 ---
 
-## 7. Reading the metrics
+## 7. Monitoring with TensorBoard
+
+Logs are written to `/root/artifacts/runs/<run_name>/tb`. **Always point TensorBoard
+at the parent directory**, `/root/artifacts/runs` — that makes it overlay *every*
+run, past and present, on the same axes, which is the whole point of naming runs.
+
+### Option A — VS Code's built-in panel (best experience)
+
+1. Press **`Ctrl+Shift+P`** (`Cmd+Shift+P` on macOS) to open the Command Palette.
+2. Type **`Python: Launch TensorBoard`** and press Enter.
+3. Choose **"Select another folder"** and enter `/root/artifacts/runs`.
+
+TensorBoard opens as a VS Code tab. Over a remote tunnel this needs no port
+forwarding on your part — VS Code handles it.
+
+### Option B — inline in a notebook
+
+```python
+%load_ext tensorboard
+%tensorboard --logdir /root/artifacts/runs --port 6006
+```
+
+Re-run the cell to refresh. This is section 18 of `data prep and train 1.ipynb`
+and section 4 of `resume training.ipynb`.
+
+### Option C — a browser, via the tunnel
+
+```bash
+tensorboard --logdir /root/artifacts/runs --port 6006 --bind_all
+```
+
+Then open the **PORTS** panel in VS Code (next to TERMINAL). Port `6006` will be
+listed — click the 🌐 globe icon in the *Forwarded Address* column. If it is not
+listed, click **Forward a Port** and enter `6006`.
+
+To leave it running after you disconnect:
+
+```bash
+nohup tensorboard --logdir /root/artifacts/runs --port 6006 --bind_all \
+      > /root/artifacts/tensorboard.log 2>&1 &
+```
+
+### What to look at, in order of usefulness
+
+| Tab / scalar | What it tells you |
+|---|---|
+| `val/std_ratio` | **Look here first.** Prediction std ÷ target std. If it slides toward 0 the model has given up and is predicting ≈ 0 for everything. A falling loss with a collapsing `std_ratio` is not learning — it is surrender. |
+| `val/r2_vs_zero` | The honest score. **+0.005 … +0.02 is good.** Negative means worse than predicting "no change". |
+| `val/rank_ic` | Spearman correlation of forecast vs outcome. 0.02–0.05 is a real signal. |
+| `train/loss` vs `val/loss` | The classic generalisation gap. With 7 M samples and 38 M params it should stay narrow. |
+| `train/grad_norm` | Should settle into a stable band. Repeated spikes at the clip threshold mean the LR is too high. |
+| `train/amp_loss_scale` | fp16 health. It halves whenever a step overflows and is skipped. Occasional halving is normal; a scale that keeps collapsing means numerical trouble. |
+| `perf/samples_per_sec` | Throughput (~3,050 total). A sudden drop means something else started competing for the GPUs. |
+| `perf/gpu_mem_alloc_GB` | Should sit flat at ~10.7 GB. A slow climb means a memory leak. |
+| **IMAGES** tab | `val/forecast_examples` — predicted vs actual cumulative 20-day paths, redrawn every epoch. The fastest way to see *how* the model is wrong, not just how much. |
+| **HPARAMS** tab | Every run's config against its best metric, in one sortable table. |
+
+> **Reading the loss curve honestly.** Validation loss here will improve by a few
+> *thousandths* and then flatten. That is normal — daily equity returns are mostly
+> unpredictable noise. If your loss drops dramatically, be suspicious before you
+> are pleased, and go looking for look-ahead in your features.
+
+**A resumed run continues the same curves.** `global_step` is restored from the
+checkpoint, so new points land after the old ones rather than overwriting them
+from step 0. Pass a different `--run-name` if you want a separate curve to
+compare against instead.
+
+**Not seeing anything?** The most common cause is pointing at a run directory
+instead of the parent. Use `/root/artifacts/runs`, not
+`/root/artifacts/runs/<name>/tb`.
+
+---
+
+## 8. Reading the metrics
 
 `val/loss` is Huber on volatility-scaled returns. The interpretable numbers:
 
@@ -245,7 +335,7 @@ naive forecast for a return series.
 
 ---
 
-## 8. Reproducing
+## 9. Reproducing
 
 ```bash
 # 1. build the dataset (~9 min; download chunks are cached and resumable)
@@ -255,8 +345,8 @@ python -m src.prepare_data
 PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \
 torchrun --nproc_per_node=2 -m src.train --run-name patchtst_us_equities_v1
 
-# 3. watch it
-tensorboard --logdir /root/artifacts/runs --port 6006
+# 3. watch it (see section 7 for the VS Code and notebook alternatives)
+tensorboard --logdir /root/artifacts/runs --port 6006 --bind_all
 
 # 4. resume from the last checkpoint
 torchrun --nproc_per_node=2 -m src.train \
@@ -271,7 +361,7 @@ torchrun --nproc_per_node=2 -m src.train --set depth=16 --set loss="'quantile'"
 
 ---
 
-## 9. Backups
+## 10. Backups
 
 * **GitHub** — code, config and `logs/<run>/history.jsonl` are committed and
   pushed every 5 epochs and at the end of training.
@@ -286,7 +376,7 @@ one upload, not twelve hours of GPU time.
 
 ---
 
-## 10. Suggested next steps
+## 11. Suggested next steps
 
 1. **Ablate the architecture.** Train the old LSTM on the *same* 7 M-window
    dataset. The comparison — same data, same loss, same budget — is the core

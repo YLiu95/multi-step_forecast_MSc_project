@@ -161,6 +161,16 @@ class CheckpointCallback(Callback):
     def on_epoch_end(self, state):
         cfg, ep = self.cfg, state["epoch"]
         value = state["val_metrics"][self.monitor]
+
+        # Decide "is this a new best" BEFORE building the payload. Doing it after
+        # writes the *previous* epoch's best into the checkpoint, so a resumed
+        # run starts with a stale threshold and re-announces a best it already
+        # had. Subtle, and it silently corrupts the early-stopping baseline.
+        is_best = self._better(value)
+        if is_best:
+            self.best = value
+        state["best_value"] = self.best
+
         payload = state["checkpoint_fn"](include_optimizer=True)
         payload["best_value"] = self.best
 
@@ -171,19 +181,14 @@ class CheckpointCallback(Callback):
         state.setdefault("messages", []).append(
             f"saved {path.name} ({path.stat().st_size / 1e6:,.0f} MB)")
 
-        if self._better(value):
-            self.best = value
-            payload["best_value"] = value
+        if is_best:
             best_path = self.dir / "best.pt"
             torch.save(state["checkpoint_fn"](include_optimizer=False)
                        | {"best_value": value, "epoch": ep}, best_path)
             msg = self.hf.upload(best_path, f"{cfg.hf_best_dir}/best.pt",
                                  f"best {self.monitor}={value:.6f} @ epoch {ep}")
             state["messages"].append(f"NEW BEST {self.monitor}={value:.6f} | {msg}")
-            state["is_best"] = True
-        else:
-            state["is_best"] = False
-        state["best_value"] = self.best
+        state["is_best"] = is_best
 
         if ep % cfg.hf_push_every_epochs == 0:
             msg = self.hf.upload(path, f"{cfg.hf_ckpt_dir}/{path.name}",
@@ -225,6 +230,13 @@ class EarlyStopping(Callback):
         self.cfg, self.monitor, self.mode, self.min_delta = cfg, monitor, mode, min_delta
         self.best = float("inf") if mode == "min" else -float("inf")
         self.wait = 0
+
+    def on_train_begin(self, state):
+        # Inherit the restored best so a resumed run does not get a free
+        # `patience` epochs of grace it has not earned.
+        restored = state.get("best_value")
+        if restored is not None and restored == restored:      # not NaN
+            self.best = restored
 
     def on_epoch_end(self, state):
         v = state["val_metrics"][self.monitor]

@@ -102,6 +102,10 @@ class ModelEMA:
     SGD on a noisy objective wanders around the minimum rather than sitting in
     it. Averaging recent weights is a nearly free variance reduction and on
     financial targets it is usually worth several basis points of val loss.
+
+    The update is fused with `torch._foreach_*`. The obvious loop over
+    `state_dict()` issues ~300 tiny CUDA kernels every step, which on a 0.5 s
+    step is a measurable tax; the foreach version issues 2.
     """
 
     def __init__(self, model: torch.nn.Module, decay: float):
@@ -109,16 +113,32 @@ class ModelEMA:
         self.shadow = deepcopy(_unwrap(model)).eval()
         for p in self.shadow.parameters():
             p.requires_grad_(False)
+        self._src: list[torch.Tensor] | None = None
+        self._dst: list[torch.Tensor] = []
+        self._copy: list[tuple[torch.Tensor, torch.Tensor]] = []
+
+    def _bind(self, model: torch.nn.Module) -> None:
+        msd = _unwrap(model).state_dict()
+        self._src, self._dst, self._copy = [], [], []
+        for k, v in self.shadow.state_dict().items():
+            if v.dtype.is_floating_point:
+                self._dst.append(v)
+                self._src.append(msd[k])
+            else:
+                self._copy.append((v, msd[k]))
 
     @torch.no_grad()
     def update(self, model: torch.nn.Module) -> None:
-        d = self.decay
-        msd = _unwrap(model).state_dict()
-        for k, v in self.shadow.state_dict().items():
-            if v.dtype.is_floating_point:
-                v.mul_(d).add_(msd[k].detach(), alpha=1 - d)
-            else:
-                v.copy_(msd[k])
+        if self._src is None:
+            self._bind(model)
+        torch._foreach_mul_(self._dst, self.decay)
+        torch._foreach_add_(self._dst, self._src, alpha=1 - self.decay)
+        for dst, src in self._copy:
+            dst.copy_(src)
+
+    def load_state_dict(self, sd) -> None:
+        self.shadow.load_state_dict(sd)
+        self._src = None                     # rebind: the tensors were replaced
 
 
 def _unwrap(model: torch.nn.Module) -> torch.nn.Module:
@@ -132,7 +152,12 @@ def _unwrap(model: torch.nn.Module) -> torch.nn.Module:
 def train_one_epoch(cfg, model, panel, opt, scaler, criterion, ema, state,
                     generator, callbacks, device, steps_per_epoch):
     model.train()
-    total, seen = 0.0, 0
+    # Accumulate the loss on the GPU. Calling .item() every step would force a
+    # host sync, which stalls the CPU until the GPU drains and destroys the
+    # overlap between the backward pass and the DDP all-reduce. We only sync on
+    # logging steps and once at the end of the epoch.
+    loss_accum = torch.zeros((), device=device)
+    seen = 0
     t0 = time.time()
     batches = panel.random_batches("train", cfg.batch_size,
                                    steps_per_epoch * cfg.accum_steps, generator)
@@ -153,7 +178,7 @@ def train_one_epoch(cfg, model, panel, opt, scaler, criterion, ema, state,
                 loss = criterion(pred, y) / cfg.accum_steps
             scaler.scale(loss).backward()
 
-        total += loss.item() * cfg.accum_steps
+        loss_accum += loss.detach() * cfg.accum_steps
         seen += x.shape[0]
 
         if not is_update:
@@ -169,17 +194,19 @@ def train_one_epoch(cfg, model, panel, opt, scaler, criterion, ema, state,
             ema.update(model)
 
         state["global_step"] += 1
-        state["loss"] = loss.item() * cfg.accum_steps
-        state["lr"] = lr
-        state["grad_norm"] = float(gnorm)
-        state["loss_scale"] = float(scaler.get_scale()) if cfg.amp else 0.0
-        dt = max(time.time() - t0, 1e-9)
-        state["samples_per_sec"] = seen * state["world_size"] / dt
-        if state["is_main"]:
+        if state["is_main"] and state["global_step"] % cfg.log_every_steps == 0:
+            state["loss"] = loss.item() * cfg.accum_steps      # the only sync
+            state["lr"] = lr
+            state["grad_norm"] = gnorm.item()
+            state["loss_scale"] = float(scaler.get_scale()) if cfg.amp else 0.0
+            state["samples_per_sec"] = (seen * state["world_size"]
+                                        / max(time.time() - t0, 1e-9))
             callbacks.on_step_end(state)
 
     n_updates = max(steps_per_epoch, 1)
-    return total / (n_updates * cfg.accum_steps), seen * state["world_size"] / max(time.time() - t0, 1e-9)
+    dt = max(time.time() - t0, 1e-9)
+    state["lr"] = lr
+    return loss_accum.item() / (n_updates * cfg.accum_steps), seen * state["world_size"] / dt
 
 
 class _null:
@@ -265,7 +292,7 @@ def load_checkpoint(path, model, opt=None, scaler=None, ema=None,
     ck = torch.load(path, map_location=map_location, weights_only=False)
     _unwrap(model).load_state_dict(ck["model"], strict=strict)
     if ema is not None and "ema" in ck:
-        ema.shadow.load_state_dict(ck["ema"], strict=strict)
+        ema.load_state_dict(ck["ema"])
     if opt is not None and "optimizer" in ck:
         opt.load_state_dict(ck["optimizer"])
     if scaler is not None and "scaler" in ck:
