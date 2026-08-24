@@ -263,7 +263,8 @@ class GitBackupCallback(Callback):
     def __init__(self, cfg: Config, repo_dir: str | Path):
         self.cfg = cfg
         self.git = GitBackup(repo_dir, cfg.github_repo)
-        self.mirror = Path(repo_dir) / cfg.github_subdir / "logs" / cfg.run_name
+        self.subdir = Path(repo_dir) / cfg.github_subdir
+        self.mirror = self.subdir / "logs" / cfg.run_name
         self.mirror.mkdir(parents=True, exist_ok=True)
 
     def _sync(self) -> None:
@@ -273,6 +274,20 @@ class GitBackupCallback(Callback):
         cfg_path = self.cfg.paths["run"] / "config.json"
         if cfg_path.exists():
             shutil.copy2(cfg_path, self.mirror / "config.json")
+        self._sync_notebooks()
+
+    def _sync_notebooks(self) -> None:
+        """Copy the live notebooks into the repo so the committed copy is current."""
+        src_dir = Path(self.cfg.notebook_dir)
+        if not src_dir.is_dir() or src_dir == self.subdir:
+            return
+        for nb in src_dir.glob("*.ipynb"):
+            dst = self.subdir / nb.name
+            try:
+                if not dst.exists() or dst.read_bytes() != nb.read_bytes():
+                    shutil.copy2(nb, dst)
+            except OSError:
+                pass                       # a backup must never kill the run
 
     def on_epoch_end(self, state):
         if state["epoch"] % self.cfg.git_push_every_epochs:

@@ -103,6 +103,9 @@ class Config:
     hf_best_dir: str = "best model"
     github_repo: str = "YLiu95/multi-step_forecast_MSc_project"
     github_subdir: str = "new experiment 1"
+    # Working notebooks live outside the repo; every periodic git backup copies
+    # them in so the committed copy can never go stale.
+    notebook_dir: str = "/root"
 
     # ---------------------------------------------------------------- paths #
     artifact_root: str = str(ARTIFACT_ROOT)
