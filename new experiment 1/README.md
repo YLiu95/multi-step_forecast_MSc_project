@@ -16,9 +16,10 @@ torchrun --nproc_per_node=2 -m src.train --run-name my_run        # train on bot
 tensorboard --logdir /root/artifacts/runs --port 6006 --bind_all  # watch it
 ```
 
-**To monitor training, see [§7 Monitoring with TensorBoard](#7-monitoring-with-tensorboard)** —
-in VS Code the quickest route is `Ctrl+Shift+P` → `Python: Launch TensorBoard` →
-*Select another folder* → `/root/artifacts/runs`.
+**To monitor training, see [§7 Monitoring with TensorBoard](#7-monitoring-with-tensorboard).**
+Run the `tensorboard` command above, then open the VS Code **PORTS** panel and click
+the globe icon on port `6006`. (`Python: Launch TensorBoard` in the Command Palette
+needs the separate `ms-toolsai.tensorboard` extension — it is not installed by default.)
 
 ---
 
@@ -252,14 +253,22 @@ Logs are written to `/root/artifacts/runs/<run_name>/tb`. **Always point TensorB
 at the parent directory**, `/root/artifacts/runs` — that makes it overlay *every*
 run, past and present, on the same axes, which is the whole point of naming runs.
 
-### Option A — VS Code's built-in panel (best experience)
+### Option A — terminal + the VS Code PORTS panel (works everywhere)
 
-1. Press **`Ctrl+Shift+P`** (`Cmd+Shift+P` on macOS) to open the Command Palette.
-2. Type **`Python: Launch TensorBoard`** and press Enter.
-3. Choose **"Select another folder"** and enter `/root/artifacts/runs`.
+```bash
+tensorboard --logdir /root/artifacts/runs --port 6006 --bind_all
+```
 
-TensorBoard opens as a VS Code tab. Over a remote tunnel this needs no port
-forwarding on your part — VS Code handles it.
+Then open the **PORTS** panel in VS Code (the tab next to TERMINAL). Port `6006`
+should appear — click the 🌐 globe icon in the *Forwarded Address* column. If it
+is not listed, click **Forward a Port** and enter `6006`.
+
+To leave it running after you disconnect:
+
+```bash
+nohup tensorboard --logdir /root/artifacts/runs --port 6006 --bind_all \
+      > /root/artifacts/tensorboard.log 2>&1 &
+```
 
 ### Option B — inline in a notebook
 
@@ -271,28 +280,32 @@ forwarding on your part — VS Code handles it.
 Re-run the cell to refresh. This is section 18 of `data prep and train 1.ipynb`
 and section 4 of `resume training.ipynb`.
 
-### Option C — a browser, via the tunnel
+### Option C — the Command Palette (requires an extension)
+
+`Python: Launch TensorBoard` **does not exist by default.** It used to ship with
+the Python extension, but Microsoft moved it into a standalone extension. To get
+that command you must first install:
+
+> **Extension ID:** `ms-toolsai.tensorboard` — *"Tensorboard: Launch and view
+> Tensorboards within VS Code"*
+
+Install it from the Extensions sidebar (`Ctrl+Shift+X`, search `tensorboard`), or:
 
 ```bash
-tensorboard --logdir /root/artifacts/runs --port 6006 --bind_all
+code --install-extension ms-toolsai.tensorboard
 ```
 
-Then open the **PORTS** panel in VS Code (next to TERMINAL). Port `6006` will be
-listed — click the 🌐 globe icon in the *Forwarded Address* column. If it is not
-listed, click **Forward a Port** and enter `6006`.
+Only then will `Ctrl+Shift+P` → **`Python: Launch TensorBoard`** →
+*Select another folder* → `/root/artifacts/runs` work.
 
-To leave it running after you disconnect:
-
-```bash
-nohup tensorboard --logdir /root/artifacts/runs --port 6006 --bind_all \
-      > /root/artifacts/tensorboard.log 2>&1 &
-```
+If the command is missing, the extension is not installed — use Option A instead.
 
 ### TensorBoard troubleshooting
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| `TensorBoard could not bind to port 6006, it was already in use` | An instance is already running — very likely serving what you want | `curl -s localhost:6006/data/runs` to see what it has. Reuse it, or restart: `pkill -f "tensorboard.*6006"` then relaunch. Or just pick another port: `--port 6007` |
+| `TensorBoard could not bind to port 6006, it was already in use` | An instance is already running — quite likely serving what you want | `curl -s localhost:6006/data/runs` to see what it has. Reuse it, or free the port with `pkill -f tensorboard`, or pick another: `--port 6007` |
+| `Python: Launch TensorBoard` is not in the Command Palette | The `ms-toolsai.tensorboard` extension is not installed | Install it (Option C), or just use Option A |
 | Page loads but says **"No dashboards are active"** | Pointed at a run directory instead of the parent, **or** the log directory was deleted and recreated after TensorBoard started (it holds stale inodes) | Use `/root/artifacts/runs`, not `.../runs/<name>/tb`. If the path is right, restart TensorBoard |
 | Scalars stop updating mid-run | Event file cached | Add `--reload_multifile=true`, or use the ⟳ refresh control (top right) |
 | Port 6006 not in the VS Code **PORTS** panel | Not auto-detected | Click **Forward a Port** and enter `6006` |

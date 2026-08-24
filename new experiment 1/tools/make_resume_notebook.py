@@ -242,18 +242,24 @@ md(r"""
 `TB_LOGDIR` points at the **parent** `runs/` directory, so TensorBoard shows every run — the
 one you are resuming *and* every past one — on the same axes.
 
-### Option A — inline (run the next cell)
-
-### Option B — VS Code's built-in panel
-1. **`Ctrl+Shift+P`** (`Cmd+Shift+P` on macOS)
-2. Type **`Python: Launch TensorBoard`**
-3. Choose **"Select another folder"** → `/root/artifacts/runs`
-
-### Option C — browser over the tunnel
+### Option A — terminal + the VS Code PORTS panel (works everywhere)
 ```bash
 tensorboard --logdir /root/artifacts/runs --port 6006 --bind_all
 ```
-Then open the **PORTS** panel in VS Code and click the 🌐 globe icon next to port `6006`.
+Then open the **PORTS** panel in VS Code (the tab next to TERMINAL) and click the 🌐 globe icon
+on port `6006`. If it is not listed, click **Forward a Port** and enter `6006`.
+
+### Option B — inline (run the next cell)
+
+### Option C — Command Palette (needs an extension first)
+`Python: Launch TensorBoard` **does not exist by default** — Microsoft moved it out of the
+Python extension. Install **`ms-toolsai.tensorboard`** (`Ctrl+Shift+X`, search `tensorboard`)
+and only then will `Ctrl+Shift+P` → `Python: Launch TensorBoard` → *Select another folder* →
+`/root/artifacts/runs` work.
+
+> **Already in use?** `TensorBoard could not bind to port 6006` just means one is already
+> running. Check what it is serving with `!curl -s localhost:6006/data/runs`, or free the port
+> with `!pkill -f tensorboard`, or pass `--port 6007`.
 
 > **A resumed run continues the same curves.** `global_step` is restored from the checkpoint,
 > so the new points land after the old ones instead of overwriting them from step 0. If you set
