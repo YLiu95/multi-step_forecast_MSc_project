@@ -315,7 +315,7 @@ backed up to both places:
 
 | Destination | Files stored there | Files explicitly excluded |
 |---|---|---|
-| GitHub | source code, tests, Markdown, requirements, target manifest, resolved config, JSONL history | model and optimizer checkpoints |
+| GitHub | source code, tests, Markdown, requirements, target manifest, resolved config, JSONL history, TensorBoard event logs | model and optimizer checkpoints |
 | Hugging Face | `.pt` periodic checkpoints and best model weights only | code, documentation, config, target manifest, TensorBoard events, and history |
 
 `HFBackup.upload` enforces this policy in code: it rejects non-`.pt` files and

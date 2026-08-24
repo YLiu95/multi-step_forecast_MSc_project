@@ -186,6 +186,11 @@ class GitBackupCallback(Callback):
         for source in (self.cfg.paths["history"], self.cfg.paths["run"] / "config.json"):
             if source.exists():
                 shutil.copy2(source, self.log_directory / source.name)
+        tensorboard_source = self.cfg.paths["tb"]
+        tensorboard_destination = self.log_directory / "tb"
+        if tensorboard_source.exists():
+            shutil.copytree(tensorboard_source, tensorboard_destination,
+                            dirs_exist_ok=True)
 
     def on_epoch_end(self, state):
         if state["epoch"] % self.cfg.git_push_every_epochs:
