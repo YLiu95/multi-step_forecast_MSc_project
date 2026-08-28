@@ -65,6 +65,7 @@ class Config:
     github_repo: str = "YLiu95/multi-step_forecast_MSc_project"
     github_subdir: str = "new experiment 1/new_experiment_1.2_tpu"
     artifact_root: str = str(ARTIFACT_ROOT)
+    loss_weights_path: str = str(EXPERIMENT_ROOT / "loss_weights.json")
 
     @property
     def n_patches(self) -> int:
@@ -82,7 +83,7 @@ class Config:
             "tensorboard": run / "tensorboard",
             "history": run / "history.jsonl",
             "checkpoints": root / "checkpoints" / self.run_name,
-            "loss_weights": EXPERIMENT_ROOT / "loss_weights.json",
+            "loss_weights": Path(self.loss_weights_path),
         }
 
     def validate(self) -> None:

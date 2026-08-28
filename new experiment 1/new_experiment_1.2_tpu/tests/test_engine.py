@@ -32,6 +32,7 @@ def tiny_config(tmp_path) -> Config:
         steps_per_epoch=2,
         warmup_epochs=1,
         artifact_root=str(tmp_path),
+        loss_weights_path=str(tmp_path / "loss_weights.json"),
     )
 
 

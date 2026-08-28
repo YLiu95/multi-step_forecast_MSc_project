@@ -136,11 +136,11 @@ class HistoryLogger:
 
 
 class CheckpointManager:
-    def __init__(self, cfg: Config):
+    def __init__(self, cfg: Config, enable_remote: bool = True):
         self.cfg = cfg
         self.root = cfg.paths["checkpoints"]
         self.root.mkdir(parents=True, exist_ok=True)
-        self.hf = HFBackup(cfg.hf_repo_id)
+        self.hf = HFBackup(cfg.hf_repo_id) if enable_remote else None
 
     def save_periodic(self, state: ExperimentTrainState, metadata: dict) -> list[str]:
         epoch = int(metadata["epoch"])
@@ -149,10 +149,12 @@ class CheckpointManager:
         save_state(state, directory / "state.msgpack")
         (directory / "metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
         (self.root / "latest.json").write_text(json.dumps({"directory": directory.name}) + "\n")
-        messages = [self.hf.upload_folder(
-            directory, f"checkpoints/{directory.name}", f"Checkpoint epoch {epoch}"
-        )]
-        messages.extend(self.hf.rotate_checkpoints(self.cfg.keep_last_n_checkpoints))
+        messages = [f"Saved local checkpoint {directory.name}"]
+        if self.hf is not None:
+            messages.append(self.hf.upload_folder(
+                directory, f"checkpoints/{directory.name}", f"Checkpoint epoch {epoch}"
+            ))
+            messages.extend(self.hf.rotate_checkpoints(self.cfg.keep_last_n_checkpoints))
         directories = sorted(self.root.glob("epoch_*"))
         for old in directories[:-self.cfg.keep_last_n_checkpoints]:
             shutil.rmtree(old)
@@ -163,6 +165,8 @@ class CheckpointManager:
         directory.mkdir(parents=True, exist_ok=True)
         save_params(params, directory / "params.msgpack")
         (directory / "metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
+        if self.hf is None:
+            return "Saved local best model"
         return self.hf.upload_folder(directory, "best model", "Update best model")
 
     def restore_auto(self, template: ExperimentTrainState) \
@@ -172,7 +176,7 @@ class CheckpointManager:
         if pointer.exists():
             directory = self.root / json.loads(pointer.read_text())["directory"]
         if directory is None or not (directory / "state.msgpack").exists():
-            directory = self.hf.download_latest(self.root)
+            directory = self.hf.download_latest(self.root) if self.hf is not None else None
         if directory is None:
             return None
         state = restore_state(template, directory / "state.msgpack")
@@ -182,7 +186,7 @@ class CheckpointManager:
     def restore_best(self, template_params: Any) -> tuple[Any, dict] | None:
         directory = self.root / "best model"
         if not (directory / "params.msgpack").exists():
-            downloaded = self.hf.download_best(directory)
+            downloaded = self.hf.download_best(directory) if self.hf is not None else None
             if downloaded is None:
                 return None
         params = restore_params(template_params, directory / "params.msgpack")

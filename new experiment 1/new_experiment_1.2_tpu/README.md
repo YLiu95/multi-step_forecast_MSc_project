@@ -358,6 +358,12 @@ Kaggle Secrets. Tokens are never written to experiment logs.
 
 ## 10. Commands and Checks
 
+The corrected two-epoch pilot completed successfully. Over ten optimizer
+updates, validation loss changed from 2.71770 to 2.51071 and magnitude MAE from
+401.8 to 374.0 bp. Direction accuracy remained near chance, as expected at this
+stage. A 4.742 GB full checkpoint restored successfully, verifying the recovery
+path before the main run.
+
 ```bash
 # Run all CPU-safe and tiny-TPU tests
 python -m pytest -q

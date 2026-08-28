@@ -73,3 +73,58 @@ result is known.
   about 6 GB of physical HBM/core for compiler and runtime variation.
 - Lesson: Measure the exact embedding table and optimizer state; extrapolation
   from a reduced-universe probe is useful but not sufficient.
+
+## Iteration 5: First End-to-End Pilot and Control Isolation
+
+- Observation: A ten-update, two-validation pilot completed end to end. Loss
+  moved from 2.62342 to 2.42544 and magnitude MAE from 401.9 to 374.1 bp. This
+  confirms training, EMA, validation slicing, TensorBoard, and 4.5 GB full-state
+  checkpoint serialization work at production shape.
+- Observation: The recorded weights were 0.667/0.333 rather than the intended
+  0.7/0.3. A unit test had written its 2:1 fixture to the shared live-control
+  file because that path was not configurable.
+- Action: Make `loss_weights_path` configurable, give the test a temporary
+  file, restore 0.7/0.3, preserve this pilot as `smoke_contaminated`, and rerun.
+- Lesson: Tests must never mutate an operator control file. Recording resolved
+  controls in every history row made the mistake visible immediately.
+
+## Iteration 6: Corrected Two-Epoch Pilot
+
+- Observation: With the intended 0.7 magnitude / 0.3 direction weights, ten
+  production-shape updates reduced validation loss from 2.71770 to 2.51071 and
+  magnitude MAE from 401.8 to 374.0 bp. Direction accuracy moved from 0.469 to
+  0.461 against a validation up-rate near 0.464.
+- Observation: The complete 4.742 GB model, EMA, optimizer, and step checkpoint
+  restored correctly at epoch 2. The best EMA-only artifact is 1.186 GB.
+- Action: Keep the initial loss weights and learning rate for the main run.
+  Direction is still at the noise floor, but ten updates are far too few to
+  distinguish weak signal from normal stochastic variation.
+- Lesson: A smoke run proves plumbing and catches scale errors. It does not
+  provide enough independent validation points for hyperparameter selection.
+## Epoch 1
+
+- Observation: train loss `3.22062`; validation loss `2.62342`; magnitude MAE `401.9` bp; direction accuracy `0.469`; epoch `1.6` minutes.
+- Loss weights: magnitude `0.667`, direction `0.333`.
+- Action: Keep the initial settings until at least three comparable validation points exist.
+- Lesson: compare validation trends and naive baselines, not training loss alone.
+
+## Epoch 2
+
+- Observation: train loss `2.77456`; validation loss `2.42544`; magnitude MAE `374.1` bp; direction accuracy `0.452`; epoch `0.1` minutes.
+- Loss weights: magnitude `0.667`, direction `0.333`.
+- Action: Keep the current settings because the declared validation objective improved.
+- Lesson: compare validation trends and naive baselines, not training loss alone.
+
+## Epoch 1
+
+- Observation: train loss `3.32449`; validation loss `2.71770`; magnitude MAE `401.8` bp; direction accuracy `0.469`; epoch `1.6` minutes.
+- Loss weights: magnitude `0.700`, direction `0.300`.
+- Action: Keep the initial settings until at least three comparable validation points exist.
+- Lesson: compare validation trends and naive baselines, not training loss alone.
+
+## Epoch 2
+
+- Observation: train loss `2.91685`; validation loss `2.51071`; magnitude MAE `374.0` bp; direction accuracy `0.461`; epoch `0.1` minutes.
+- Loss weights: magnitude `0.700`, direction `0.300`.
+- Action: Keep the current settings because the declared validation objective improved.
+- Lesson: compare validation trends and naive baselines, not training loss alone.

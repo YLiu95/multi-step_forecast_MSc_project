@@ -64,7 +64,7 @@ def train(cfg: Config, resume: bool = False, backups: bool = True) -> None:
     )
     print(model_summary, flush=True)
 
-    checkpoint_manager = CheckpointManager(cfg)
+    checkpoint_manager = CheckpointManager(cfg, enable_remote=backups)
     start_epoch = 1
     best_value = float("inf")
     best_epoch = 0
