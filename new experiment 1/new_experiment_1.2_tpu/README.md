@@ -2,6 +2,10 @@
 
 ## Open TensorBoard First
 
+Current session link (temporary):
+
+**https://magic-answer-coated-result.trycloudflare.com**
+
 From the experiment directory, install the small tunnel binary once and start
 TensorBoard plus a public Cloudflare tunnel:
 
@@ -99,6 +103,31 @@ It does not predict seven separate prices.
 The source is the private Hugging Face dataset
 `YL95/new_experiment_1-data`: 135,493,260 daily rows and 39,260 price series
 from AU, CA, CH, CN, DE, FR, GB, HK, IN, JP, KR, NL, and US.
+
+The completed preparation produced this measured coverage:
+
+| Market | Series | Train targets | Validation targets | Test targets | Train anchors |
+|---|---:|---:|---:|---:|---:|
+| AU | 1,853 | 1,214 | 1,557 | 1,774 | 3,919,711 |
+| CA | 2,514 | 1,553 | 2,049 | 2,407 | 4,532,941 |
+| CH | 266 | 213 | 233 | 225 | 739,946 |
+| CN | 6,861 | 3,354 | 4,990 | 6,463 | 8,173,565 |
+| DE | 915 | 704 | 840 | 858 | 2,195,663 |
+| FR | 630 | 492 | 563 | 605 | 1,697,980 |
+| GB | 1,492 | 1,115 | 1,352 | 1,451 | 4,172,788 |
+| HK | 2,541 | 1,608 | 2,143 | 2,413 | 4,070,600 |
+| IN | 4,797 | 3,083 | 3,559 | 4,426 | 8,393,418 |
+| JP | 3,762 | 3,008 | 3,384 | 3,712 | 10,342,687 |
+| KR | 2,522 | 1,732 | 2,078 | 2,438 | 5,141,076 |
+| NL | 166 | 75 | 104 | 125 | 43,398 |
+| US | 10,941 | 4,817 | 6,767 | 9,591 | 16,435,193 |
+| **Total** | **39,260** | **22,968** | **29,619** | **36,488** | **69,858,966** |
+
+There are also 25,199,313 validation anchors and 29,137,723 test anchors,
+for 124,196,002 legal examples in total. An *anchor* is one legal target ticker
+and forecast date; randomized context baskets create many more possible inputs.
+All seven Mag7 tickers were found. The prepared memory-mapped panel occupies
+1.9 GB, and the train-only global return scale is 3.406079%.
 
 Only these four columns are read:
 
@@ -262,9 +291,16 @@ its gradients.
 
 ## 7. Why This Size Fits the TPU
 
-The selected model has about 294M parameters and uses all eight TPU cores with
-global batch 320, or 40 samples per core. The measured candidate reached about
-50.6% model FLOP utilisation.
+The selected model has exactly 296,377,346 parameters and uses all eight TPU
+cores with global batch 320, or 40 samples per core. The final full-universe
+benchmark, including EMA and both conditioned heads, measured 1.514 seconds per
+update, 13,528 ticker histories per second, 9.33 GB HBM per core, and 34.1%
+estimated MFU. CPU batch construction took only 0.081 seconds, so input loading
+does not starve the TPU.
+
+At 500 updates, compute takes about 12.6 minutes per epoch before validation
+and backup time. A 60-epoch ceiling is therefore roughly 13-15 hours; early
+stopping can end it sooner.
 
 Activation checkpointing (`nn.remat`) recomputes intermediate activations
 during the backward pass instead of storing all of them. Without it, compilation

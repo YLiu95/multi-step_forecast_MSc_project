@@ -1,0 +1,9 @@
+{
+  "parameters": 296377346.0,
+  "compile_seconds": 86.21011066436768,
+  "seconds_per_step": 1.5138545036315918,
+  "samples_per_second": 211.38094792620473,
+  "series_per_second": 13528.380667277102,
+  "hbm_used_gb_per_core": 9.32998912,
+  "estimated_mfu_percent": 34.0524854671031
+}

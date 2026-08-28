@@ -36,8 +36,8 @@ from .model import CrossTickerPatchTransformer, count_parameters
 def mirror_run_logs(cfg: Config) -> None:
     destination = EXPERIMENT_ROOT / "logs" / cfg.run_name
     destination.mkdir(parents=True, exist_ok=True)
-    for source in (cfg.paths["history"], cfg.paths["run"] / "config.json"):
-        if source.exists():
+    for pattern in ("*.json", "*.jsonl"):
+        for source in cfg.paths["run"].glob(pattern):
             shutil.copy2(source, destination / source.name)
     tensorboard = cfg.paths["tensorboard"]
     if tensorboard.exists():

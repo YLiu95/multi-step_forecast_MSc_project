@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 from src.config import Config
 from src.prepare_data import (
@@ -7,6 +8,7 @@ from src.prepare_data import (
     price_to_log_returns,
     rolling_window_valid,
     split_anchor_masks,
+    table_to_price_matrix,
 )
 
 
@@ -50,3 +52,34 @@ def test_anchor_mask_round_trips_to_csr():
 
     assert offsets.tolist() == [0, 1, 3]
     assert days.tolist() == [1, 0, 2]
+
+
+def test_sharded_parquet_builds_one_dense_market_matrix(tmp_path):
+    first = pd.DataFrame({
+        "ticker": ["B", "A"],
+        "date": pd.to_datetime(["2020-01-02", "2020-01-01"]),
+        "adj_close_clean": [20.0, 10.0],
+    })
+    second = pd.DataFrame({
+        "ticker": ["A", "B"],
+        "date": pd.to_datetime(["2020-01-02", "2020-01-03"]),
+        "adj_close_clean": [11.0, 21.0],
+    })
+    paths = [tmp_path / "first.parquet", tmp_path / "second.parquet"]
+    first.to_parquet(paths[0], index=False)
+    second.to_parquet(paths[1], index=False)
+
+    prices, dates, tickers, observations = table_to_price_matrix(
+        paths, "adj_close_clean"
+    )
+
+    assert tickers == ["A", "B"]
+    assert observations == 4
+    assert dates.tolist() == [
+        np.datetime64("2020-01-01"),
+        np.datetime64("2020-01-02"),
+        np.datetime64("2020-01-03"),
+    ]
+    np.testing.assert_allclose(prices[0, :2], [10.0, 11.0])
+    assert np.isnan(prices[0, 2])
+    np.testing.assert_allclose(prices[1, 1:], [20.0, 21.0])

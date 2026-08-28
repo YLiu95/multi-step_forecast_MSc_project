@@ -73,3 +73,13 @@ def test_fixed_seed_and_prefetch_are_deterministic(tmp_path):
     for left, right in zip(first, second):
         for key in left:
             np.testing.assert_array_equal(left[key], right[key])
+
+
+def test_stratified_validation_reserves_mag7_rows(tmp_path):
+    cfg, root = make_panel(tmp_path)
+    sampler = GlobalBasketSampler(cfg, root)
+    batch = sampler.sample_batch(
+        "val", 20, np.random.default_rng(19), stratified=True
+    )
+
+    assert batch["is_mag7"].sum() >= 1

@@ -12,6 +12,13 @@ if ! curl -fsS "http://127.0.0.1:$PORT/" >/dev/null 2>&1; then
   echo $! >"$RUNTIME_DIR/tensorboard.pid"
 fi
 
+if ! curl -fsS --retry 30 --retry-delay 1 --retry-connrefused \
+  "http://127.0.0.1:$PORT/" >/dev/null 2>&1; then
+  cat "$RUNTIME_DIR/tensorboard.log" >&2
+  echo "TensorBoard did not become healthy; inspect $RUNTIME_DIR/tensorboard.log" >&2
+  exit 1
+fi
+
 if [[ ! -x /usr/local/bin/cloudflared ]]; then
   echo "cloudflared is not installed; run scripts/install_cloudflared.sh first" >&2
   exit 1
@@ -26,14 +33,13 @@ else
   echo $! >"$RUNTIME_DIR/cloudflared.pid"
 fi
 
-for _ in {1..30}; do
-  URL=$(grep -o 'https://[-a-z0-9]*\.trycloudflare\.com' \
-    "$RUNTIME_DIR/cloudflared.log" 2>/dev/null | tail -1 || true)
-  if [[ -n "$URL" ]]; then
-    echo "TensorBoard: $URL"
-    exit 0
-  fi
-done
+URL=$(timeout 30 tail --pid="$(cat "$RUNTIME_DIR/cloudflared.pid")" -n +1 -F \
+  "$RUNTIME_DIR/cloudflared.log" 2>/dev/null \
+  | grep -m1 -o 'https://[-a-z0-9]*\.trycloudflare\.com' || true)
+if [[ -n "$URL" ]]; then
+  echo "TensorBoard: $URL"
+  exit 0
+fi
 
 echo "Tunnel started, but its URL is not ready yet. Inspect:"
 echo "  $RUNTIME_DIR/cloudflared.log"

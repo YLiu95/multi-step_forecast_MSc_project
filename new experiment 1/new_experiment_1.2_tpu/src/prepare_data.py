@@ -8,7 +8,6 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.parquet as pq
 
@@ -83,28 +82,46 @@ def mask_to_csr(mask: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
 
 
 def table_to_price_matrix(paths: list[Path], price_column: str) \
-        -> tuple[np.ndarray, np.ndarray, list[str]]:
-    table = pa.concat_tables(
-        [pq.read_table(path, columns=["ticker", "date", price_column]) for path in paths]
-    ).combine_chunks()
-    encoded = pc.dictionary_encode(table["ticker"].chunk(0))
-    tickers = encoded.dictionary.to_pylist()
-    ticker_index = encoded.indices.to_numpy(zero_copy_only=False).astype(np.int32)
-    row_dates = table["date"].to_numpy(zero_copy_only=False).astype("datetime64[D]")
-    dates = np.unique(row_dates)
-    day_index = np.searchsorted(dates, row_dates)
+    -> tuple[np.ndarray, np.ndarray, list[str], int]:
+    ticker_set: set[str] = set()
+    date_parts = []
+    observation_count = 0
+    for shard_index, path in enumerate(paths, start=1):
+        table = pq.read_table(path, columns=["ticker", "date"])
+        ticker_set.update(pc.unique(table["ticker"]).to_pylist())
+        date_parts.append(
+            pc.unique(table["date"]).to_numpy(zero_copy_only=False).astype("datetime64[D]")
+        )
+        observation_count += table.num_rows
+        print(f"  index pass {shard_index}/{len(paths)}: {path.name}", flush=True)
+    tickers = sorted(ticker_set)
+    dates = np.unique(np.concatenate(date_parts))
+    ticker_lookup = {ticker: index for index, ticker in enumerate(tickers)}
     prices = np.full((len(tickers), len(dates)), np.nan, dtype=np.float32)
-    values = table[price_column].to_numpy(zero_copy_only=False).astype(np.float32)
-    values[(values <= 0) | ~np.isfinite(values)] = np.nan
-    prices[ticker_index, day_index] = values
-    return prices, dates, tickers
+    for shard_index, path in enumerate(paths, start=1):
+        table = pq.read_table(path, columns=["ticker", "date", price_column])
+        row_tickers = table["ticker"].to_pylist()
+        ticker_index = np.fromiter(
+            (ticker_lookup[ticker] for ticker in row_tickers),
+            dtype=np.int32,
+            count=len(row_tickers),
+        )
+        row_dates = table["date"].to_numpy(zero_copy_only=False).astype("datetime64[D]")
+        day_index = np.searchsorted(dates, row_dates)
+        values = table[price_column].to_numpy(zero_copy_only=False).astype(np.float32)
+        values[(values <= 0) | ~np.isfinite(values)] = np.nan
+        prices[ticker_index, day_index] = values
+        print(f"  matrix pass {shard_index}/{len(paths)}: {path.name}", flush=True)
+    return prices, dates, tickers, observation_count
 
 
 def prepare_raw_market(cfg: Config, market: str, paths: list[Path], output: Path,
                        global_offset: int) -> dict:
     market_dir = output / market
     market_dir.mkdir(parents=True, exist_ok=True)
-    prices, dates, tickers = table_to_price_matrix(paths, cfg.price_column)
+    prices, dates, tickers, observation_count = table_to_price_matrix(
+        paths, cfg.price_column
+    )
     returns = price_to_log_returns(prices)
     del prices
     train_mask = dates <= np.datetime64(cfg.train_end)
@@ -129,18 +146,21 @@ def prepare_raw_market(cfg: Config, market: str, paths: list[Path], output: Path
     }).to_csv(market_dir / "tickers.csv", index=False)
     print(
         f"{market}: {len(tickers):,} series, {len(dates):,} sessions, "
-        f"{len(returns):,} rows prepared",
+        f"{observation_count:,} observations prepared",
         flush=True,
     )
-    return {
+    info = {
         "market": market,
         "n_tickers": len(tickers),
         "n_dates": len(dates),
+        "n_observations": observation_count,
         "first_date": str(dates[0]),
         "last_date": str(dates[-1]),
         "global_offset": global_offset,
         "statistics": statistics,
     }
+    (market_dir / "raw_info.json").write_text(json.dumps(info, indent=2) + "\n")
+    return info
 
 
 def finalize_market(cfg: Config, market_info: dict, output: Path,
@@ -186,7 +206,9 @@ def finalize_market(cfg: Config, market_info: dict, output: Path,
         & ticker_table["ticker"].isin(MAGNIFICENT_SEVEN)
     )
     ticker_table.to_csv(market_dir / "tickers.csv", index=False)
-    return {**market_info, "anchors": anchor_counts}
+    info = {**market_info, "return_scale_pct": return_scale, "anchors": anchor_counts}
+    (market_dir / "final_info.json").write_text(json.dumps(info, indent=2) + "\n")
+    return info
 
 
 def prepare(cfg: Config, force: bool = False) -> Path:
@@ -205,9 +227,19 @@ def prepare(cfg: Config, force: bool = False) -> Path:
     market_info = []
     global_offset = 0
     for market in cfg.markets:
-        info = prepare_raw_market(
-            cfg, market, paths_by_market[market], output, global_offset
-        )
+        raw_marker = output / market / "raw_info.json"
+        required = output / market / "raw_returns_pct.npy"
+        if raw_marker.exists() and required.exists() and not force:
+            info = json.loads(raw_marker.read_text())
+            print(f"{market}: reusing completed raw panel", flush=True)
+        else:
+            info = prepare_raw_market(
+                cfg, market, paths_by_market[market], output, global_offset
+            )
+        if info["global_offset"] != global_offset:
+            raise RuntimeError(
+                f"{market} cached global offset is stale; rerun with --force"
+            )
         market_info.append(info)
         global_offset += info["n_tickers"]
 
@@ -220,7 +252,16 @@ def prepare(cfg: Config, force: bool = False) -> Path:
         raise RuntimeError("Could not estimate a positive global training return scale")
     print(f"Global train-only return scale: {return_scale:.6f}%", flush=True)
 
-    finalized = [finalize_market(cfg, info, output, return_scale) for info in market_info]
+    finalized = []
+    for info in market_info:
+        final_marker = output / info["market"] / "final_info.json"
+        if final_marker.exists() and not force:
+            cached = json.loads(final_marker.read_text())
+            if np.isclose(cached.get("return_scale_pct", -1), return_scale):
+                print(f"{info['market']}: reusing finalized panel", flush=True)
+                finalized.append(cached)
+                continue
+        finalized.append(finalize_market(cfg, info, output, return_scale))
     ticker_tables = [pd.read_csv(output / market / "tickers.csv") for market in cfg.markets]
     tickers = pd.concat(ticker_tables, ignore_index=True)
     tickers.to_csv(output / "tickers.csv", index=False)
