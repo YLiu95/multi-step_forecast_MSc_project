@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+configs/local*.json
+logs/*/tensorboard/events.out.tfevents.*
+
+# Multi-gigabyte artifacts live under /root/artifacts, never in Git.
+*.npy
+*.npz
+*.msgpack
+*.parquet

@@ -1,0 +1,10 @@
+jax==0.10.2
+flax==0.12.7
+optax==0.2.8
+numpy==2.5.0
+pandas==3.0.4
+pyarrow==24.0.0
+huggingface-hub==1.21.0
+tensorboard==2.20.0
+tensorboardX==2.6.5
+pytest==9.0.2
