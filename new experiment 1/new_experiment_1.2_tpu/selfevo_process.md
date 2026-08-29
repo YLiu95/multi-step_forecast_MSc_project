@@ -189,3 +189,38 @@ result is known.
   Periodic recovery checkpoints continue every five epochs.
 - Lesson: Gradient scale is diagnostic evidence, not an automatic instruction
   to rebalance tasks. Validation behavior decides whether intervention helps.
+
+## Epoch 6
+
+- Observation: train loss `2.54711`; validation loss `2.51705`; magnitude MAE `375.1` bp; direction accuracy `0.547`; epoch `14.7` minutes.
+- Loss weights: magnitude `0.700`, direction `0.300`.
+- Action: Continue unchanged; no single epoch justifies a hyperparameter intervention.
+- Lesson: compare validation trends and naive baselines, not training loss alone.
+
+## Epoch 7
+
+- Observation: train loss `2.53346`; validation loss `2.52688`; magnitude MAE `376.6` bp; direction accuracy `0.542`; epoch `13.1` minutes.
+- Loss weights: magnitude `0.700`, direction `0.300`.
+- Action: Continue unchanged; no single epoch justifies a hyperparameter intervention.
+- Lesson: compare validation trends and naive baselines, not training loss alone.
+
+## Epoch 8
+
+- Observation: train loss `2.50823`; validation loss `2.52127`; magnitude MAE `375.9` bp; direction accuracy `0.541`; epoch `13.1` minutes.
+- Loss weights: magnitude `0.700`, direction `0.300`.
+- Action: Continue unchanged; no single epoch justifies a hyperparameter intervention.
+- Lesson: compare validation trends and naive baselines, not training loss alone.
+
+## Epoch 9
+
+- Observation: train loss `2.54752`; validation loss `2.51399`; magnitude MAE `374.9` bp; direction accuracy `0.542`; epoch `13.2` minutes.
+- Loss weights: magnitude `0.700`, direction `0.300`.
+- Action: Continue unchanged; no single epoch justifies a hyperparameter intervention.
+- Lesson: compare validation trends and naive baselines, not training loss alone.
+
+## Epoch 10
+
+- Observation: train loss `2.52511`; validation loss `2.51366`; magnitude MAE `374.9` bp; direction accuracy `0.541`; epoch `13.1` minutes.
+- Loss weights: magnitude `0.700`, direction `0.300`.
+- Action: Continue unchanged; no single epoch justifies a hyperparameter intervention.
+- Lesson: compare validation trends and naive baselines, not training loss alone.
