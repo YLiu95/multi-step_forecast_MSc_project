@@ -259,3 +259,38 @@ result is known.
 - Loss weights: magnitude `0.700`, direction `0.300`.
 - Action: Keep the current settings because the declared validation objective improved.
 - Lesson: compare validation trends and naive baselines, not training loss alone.
+
+## Epoch 16
+
+- Observation: train loss `2.49931`; validation loss `2.50093`; magnitude MAE `373.4` bp; direction accuracy `0.544`; epoch `13.1` minutes.
+- Loss weights: magnitude `0.700`, direction `0.300`.
+- Action: Continue unchanged; no single epoch justifies a hyperparameter intervention.
+- Lesson: compare validation trends and naive baselines, not training loss alone.
+
+## Epoch 17
+
+- Observation: train loss `2.49398`; validation loss `2.50492`; magnitude MAE `374.1` bp; direction accuracy `0.545`; epoch `13.1` minutes.
+- Loss weights: magnitude `0.700`, direction `0.300`.
+- Action: Continue unchanged; no single epoch justifies a hyperparameter intervention.
+- Lesson: compare validation trends and naive baselines, not training loss alone.
+
+## Epoch 18
+
+- Observation: train loss `2.51302`; validation loss `2.50482`; magnitude MAE `374.1` bp; direction accuracy `0.544`; epoch `13.1` minutes.
+- Loss weights: magnitude `0.700`, direction `0.300`.
+- Action: Continue unchanged; no single epoch justifies a hyperparameter intervention.
+- Lesson: compare validation trends and naive baselines, not training loss alone.
+
+## Epoch 19
+
+- Observation: train loss `2.47802`; validation loss `2.50739`; magnitude MAE `374.7` bp; direction accuracy `0.540`; epoch `13.1` minutes.
+- Loss weights: magnitude `0.700`, direction `0.300`.
+- Action: Continue unchanged; no single epoch justifies a hyperparameter intervention.
+- Lesson: compare validation trends and naive baselines, not training loss alone.
+
+## Epoch 20
+
+- Observation: train loss `2.49663`; validation loss `2.50811`; magnitude MAE `374.8` bp; direction accuracy `0.539`; epoch `13.1` minutes.
+- Loss weights: magnitude `0.700`, direction `0.300`.
+- Action: Continue unchanged; no single epoch justifies a hyperparameter intervention.
+- Lesson: compare validation trends and naive baselines, not training loss alone.
