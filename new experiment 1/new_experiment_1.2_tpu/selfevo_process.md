@@ -224,3 +224,38 @@ result is known.
 - Loss weights: magnitude `0.700`, direction `0.300`.
 - Action: Continue unchanged; no single epoch justifies a hyperparameter intervention.
 - Lesson: compare validation trends and naive baselines, not training loss alone.
+
+## Epoch 11
+
+- Observation: train loss `2.51453`; validation loss `2.51101`; magnitude MAE `374.7` bp; direction accuracy `0.541`; epoch `13.1` minutes.
+- Loss weights: magnitude `0.700`, direction `0.300`.
+- Action: Continue unchanged; no single epoch justifies a hyperparameter intervention.
+- Lesson: compare validation trends and naive baselines, not training loss alone.
+
+## Epoch 12
+
+- Observation: train loss `2.50170`; validation loss `2.51082`; magnitude MAE `374.8` bp; direction accuracy `0.546`; epoch `13.1` minutes.
+- Loss weights: magnitude `0.700`, direction `0.300`.
+- Action: Continue unchanged; no single epoch justifies a hyperparameter intervention.
+- Lesson: compare validation trends and naive baselines, not training loss alone.
+
+## Epoch 13
+
+- Observation: train loss `2.52232`; validation loss `2.50755`; magnitude MAE `374.4` bp; direction accuracy `0.546`; epoch `13.1` minutes.
+- Loss weights: magnitude `0.700`, direction `0.300`.
+- Action: Keep the current settings because the declared validation objective improved.
+- Lesson: compare validation trends and naive baselines, not training loss alone.
+
+## Epoch 14
+
+- Observation: train loss `2.50080`; validation loss `2.49989`; magnitude MAE `373.3` bp; direction accuracy `0.547`; epoch `13.1` minutes.
+- Loss weights: magnitude `0.700`, direction `0.300`.
+- Action: Keep the current settings because the declared validation objective improved.
+- Lesson: compare validation trends and naive baselines, not training loss alone.
+
+## Epoch 15
+
+- Observation: train loss `2.50965`; validation loss `2.49937`; magnitude MAE `373.2` bp; direction accuracy `0.546`; epoch `13.1` minutes.
+- Loss weights: magnitude `0.700`, direction `0.300`.
+- Action: Keep the current settings because the declared validation objective improved.
+- Lesson: compare validation trends and naive baselines, not training loss alone.
