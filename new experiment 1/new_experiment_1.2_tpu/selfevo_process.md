@@ -183,8 +183,9 @@ result is known.
 - Decision: Retain peak learning rate 2e-4, gradient clip 1.0, dropout 0.15,
   weight decay 0.1, batch 320, and the existing model. Frequent clipping alone
   is not instability while train and validation trends remain smooth.
-- Action: Resume the unchanged 60-epoch schedule from epoch 5 through epoch 15.
-  Ten measured epochs should take about 2.2 hours, satisfying the requested
-  minimum while producing checkpoints at epochs 10 and 15.
+- Action: Resume the unchanged schedule from epoch 5 through epoch 60, as
+  requested. Keep validation-based early stopping active so a sustained
+  12-epoch regression still protects the selected best model. Periodic
+  checkpoints continue every five epochs.
 - Lesson: Gradient scale is diagnostic evidence, not an automatic instruction
   to rebalance tasks. Validation behavior decides whether intervention helps.
