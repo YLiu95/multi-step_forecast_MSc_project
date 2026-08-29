@@ -294,3 +294,10 @@ result is known.
 - Loss weights: magnitude `0.700`, direction `0.300`.
 - Action: Continue unchanged; no single epoch justifies a hyperparameter intervention.
 - Lesson: compare validation trends and naive baselines, not training loss alone.
+
+## Epoch 21
+
+- Observation: train loss `2.49767`; validation loss `2.50572`; magnitude MAE `374.2` bp; direction accuracy `0.541`; epoch `15.3` minutes.
+- Loss weights: magnitude `0.700`, direction `0.300`.
+- Action: Continue unchanged; no single epoch justifies a hyperparameter intervention.
+- Lesson: compare validation trends and naive baselines, not training loss alone.
