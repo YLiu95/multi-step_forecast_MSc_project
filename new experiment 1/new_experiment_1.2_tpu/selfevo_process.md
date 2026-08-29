@@ -128,3 +128,38 @@ result is known.
 - Loss weights: magnitude `0.700`, direction `0.300`.
 - Action: Keep the current settings because the declared validation objective improved.
 - Lesson: compare validation trends and naive baselines, not training loss alone.
+
+## Epoch 1
+
+- Observation: train loss `2.59971`; validation loss `2.56104`; magnitude MAE `381.7` bp; direction accuracy `0.526`; epoch `14.6` minutes.
+- Loss weights: magnitude `0.700`, direction `0.300`.
+- Action: Keep the initial settings until at least three comparable validation points exist.
+- Lesson: compare validation trends and naive baselines, not training loss alone.
+
+## Epoch 2
+
+- Observation: train loss `2.53951`; validation loss `2.53599`; magnitude MAE `377.7` bp; direction accuracy `0.533`; epoch `13.2` minutes.
+- Loss weights: magnitude `0.700`, direction `0.300`.
+- Action: Keep the current settings because the declared validation objective improved.
+- Lesson: compare validation trends and naive baselines, not training loss alone.
+
+## Epoch 3
+
+- Observation: train loss `2.53970`; validation loss `2.52150`; magnitude MAE `375.8` bp; direction accuracy `0.543`; epoch `13.1` minutes.
+- Loss weights: magnitude `0.700`, direction `0.300`.
+- Action: Keep the current settings because the declared validation objective improved.
+- Lesson: compare validation trends and naive baselines, not training loss alone.
+
+## Epoch 4
+
+- Observation: train loss `2.54396`; validation loss `2.51271`; magnitude MAE `374.7` bp; direction accuracy `0.545`; epoch `13.3` minutes.
+- Loss weights: magnitude `0.700`, direction `0.300`.
+- Action: Keep the current settings because the declared validation objective improved.
+- Lesson: compare validation trends and naive baselines, not training loss alone.
+
+## Epoch 5
+
+- Observation: train loss `2.53653`; validation loss `2.50838`; magnitude MAE `374.0` bp; direction accuracy `0.545`; epoch `13.2` minutes.
+- Loss weights: magnitude `0.700`, direction `0.300`.
+- Action: Keep the current settings because the declared validation objective improved.
+- Lesson: compare validation trends and naive baselines, not training loss alone.

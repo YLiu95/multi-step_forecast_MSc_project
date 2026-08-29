@@ -38,10 +38,10 @@ Prepare data and start training in separate terminals:
 cd /root/new_experiment_1.2_tpu
 python -m src.prepare_data
 python -m src.benchmark --steps 5
-python -m src.train
+python -m src.train --stop-after-epoch 5
 
 # Resume after an interruption from the newest local or Hugging Face checkpoint
-python -m src.train --resume
+python -m src.train --resume --stop-after-epoch 10
 ```
 
 ## 1. Experiment Overview
@@ -380,6 +380,10 @@ python -m src.train --smoke
 # Main run or recovery
 python -m src.train
 python -m src.train --resume
+
+# Recommended staged monitoring; this keeps the 60-epoch cosine schedule intact
+python -m src.train --stop-after-epoch 5
+python -m src.train --resume --stop-after-epoch 10
 
 # Validation during development; test only once after model selection
 python -m src.evaluate --split val

@@ -48,7 +48,8 @@ def mean_metrics(sums: dict[str, float], count: int) -> dict[str, float]:
     return {key: value / max(count, 1) for key, value in sums.items()}
 
 
-def train(cfg: Config, resume: bool = False, backups: bool = True) -> None:
+def train(cfg: Config, resume: bool = False, backups: bool = True,
+          stop_after_epoch: int | None = None) -> None:
     jax.config.update("jax_threefry_partitionable", True)
     cfg.validate()
     cfg.make_dirs()
@@ -94,7 +95,8 @@ def train(cfg: Config, resume: bool = False, backups: bool = True) -> None:
     global_step = int(jax.device_get(state.step))
 
     try:
-        for epoch in range(start_epoch, cfg.epochs + 1):
+        final_epoch = min(cfg.epochs, stop_after_epoch or cfg.epochs)
+        for epoch in range(start_epoch, final_epoch + 1):
             epoch_started = time.time()
             weights = read_loss_weights(cfg)
             replicated = jax.sharding.NamedSharding(
@@ -229,6 +231,11 @@ def main() -> None:
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--smoke", action="store_true")
     parser.add_argument("--skip-backups", action="store_true")
+    parser.add_argument(
+        "--stop-after-epoch",
+        type=int,
+        help="Stop cleanly after this epoch without changing the 60-epoch LR schedule",
+    )
     args = parser.parse_args()
     cfg = Config.load(args.config) if args.config else Config()
     if args.smoke:
@@ -241,7 +248,12 @@ def main() -> None:
             backup_every_epochs=1,
             early_stop_patience=2,
         )
-    train(cfg, resume=args.resume, backups=not args.skip_backups)
+    train(
+        cfg,
+        resume=args.resume,
+        backups=not args.skip_backups,
+        stop_after_epoch=args.stop_after_epoch,
+    )
 
 
 if __name__ == "__main__":
