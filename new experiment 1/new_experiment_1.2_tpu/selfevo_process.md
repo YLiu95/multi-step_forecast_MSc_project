@@ -163,3 +163,28 @@ result is known.
 - Loss weights: magnitude `0.700`, direction `0.300`.
 - Action: Keep the current settings because the declared validation objective improved.
 - Lesson: compare validation trends and naive baselines, not training loss alone.
+
+## Iteration 7: Five-Epoch Hyperparameter Review
+
+- Observation: Validation loss improved monotonically from 2.56104 at epoch 1
+  to 2.50838 at epoch 5. Magnitude MAE fell from 381.7 to 374.0 bp and remained
+  31.70% better than the zero-magnitude baseline.
+- Observation: Direction BCE improved from 0.68615 to 0.67599. Brier score
+  improved from 0.24681 to 0.24223 against a fixed prevalence baseline of
+  0.24823. Predicted up probability converged from 0.5263 to 0.4548 while the
+  actual up rate was 0.4579, showing better calibration rather than collapse.
+- Observation: Pre-clipping gradient norm averaged 1.96 and exceeded the 1.0
+  threshold in 100 of 125 logged steps. Despite that, losses were finite and
+  smooth, HBM stayed below 9.39 GB/core, and validation improved every epoch.
+- Decision: Retain 0.7/0.3 task weights. The direction head has smaller
+  gradients, but its validation loss and Brier score are already improving;
+  increasing its weight now would trade away magnitude learning without
+  evidence of a stalled classification task.
+- Decision: Retain peak learning rate 2e-4, gradient clip 1.0, dropout 0.15,
+  weight decay 0.1, batch 320, and the existing model. Frequent clipping alone
+  is not instability while train and validation trends remain smooth.
+- Action: Resume the unchanged 60-epoch schedule from epoch 5 through epoch 15.
+  Ten measured epochs should take about 2.2 hours, satisfying the requested
+  minimum while producing checkpoints at epochs 10 and 15.
+- Lesson: Gradient scale is diagnostic evidence, not an automatic instruction
+  to rebalance tasks. Validation behavior decides whether intervention helps.

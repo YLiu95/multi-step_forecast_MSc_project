@@ -1,5 +1,5 @@
 {
 	"magnitude_loss_weight": 0.7,
 	"direction_loss_weight": 0.3,
-	"reason": "Initial weights retained from experiment 1.1; change only after at least three validation points."
+	"reason": "Retained after epoch 5: both validation tasks improved, direction Brier beat its baseline, and no task had stalled."
 }

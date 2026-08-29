@@ -364,6 +364,13 @@ updates, validation loss changed from 2.71770 to 2.51071 and magnitude MAE from
 stage. A 4.742 GB full checkpoint restored successfully, verifying the recovery
 path before the main run.
 
+The first five full epochs also completed. Validation loss improved
+monotonically from 2.56104 to 2.50838, magnitude MAE improved from 381.7 to
+374.0 bp, and direction Brier improved from 0.24681 to 0.24223 versus its
+0.24823 baseline. Because both heads improved without overfitting or memory
+instability, the 0.7/0.3 weights and all optimizer settings are retained for
+epochs 6–15.
+
 ```bash
 # Run all CPU-safe and tiny-TPU tests
 python -m pytest -q
