@@ -388,6 +388,9 @@ python -m src.train --smoke
 python -m src.train
 python -m src.train --resume
 
+# Explicitly continue to epoch 60 while still preserving the best checkpoint
+python -m src.train --resume --no-early-stopping
+
 # Recommended staged monitoring; this keeps the 60-epoch cosine schedule intact
 python -m src.train --stop-after-epoch 5
 python -m src.train --resume --stop-after-epoch 10

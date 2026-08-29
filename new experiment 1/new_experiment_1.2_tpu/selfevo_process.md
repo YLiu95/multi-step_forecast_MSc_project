@@ -184,8 +184,8 @@ result is known.
   weight decay 0.1, batch 320, and the existing model. Frequent clipping alone
   is not instability while train and validation trends remain smooth.
 - Action: Resume the unchanged schedule from epoch 5 through epoch 60, as
-  requested. Keep validation-based early stopping active so a sustained
-  12-epoch regression still protects the selected best model. Periodic
-  checkpoints continue every five epochs.
+  requested, with early stopping disabled for this continuation. Validation
+  still selects the best model, so later regressions cannot replace it.
+  Periodic recovery checkpoints continue every five epochs.
 - Lesson: Gradient scale is diagnostic evidence, not an automatic instruction
   to rebalance tasks. Validation behavior decides whether intervention helps.

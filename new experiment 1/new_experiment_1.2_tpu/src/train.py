@@ -49,7 +49,8 @@ def mean_metrics(sums: dict[str, float], count: int) -> dict[str, float]:
 
 
 def train(cfg: Config, resume: bool = False, backups: bool = True,
-          stop_after_epoch: int | None = None) -> None:
+          stop_after_epoch: int | None = None,
+          enable_early_stopping: bool = True) -> None:
     jax.config.update("jax_threefry_partitionable", True)
     cfg.validate()
     cfg.make_dirs()
@@ -209,7 +210,7 @@ def train(cfg: Config, resume: bool = False, backups: bool = True,
             )
             for message in messages:
                 print(f"  {message}", flush=True)
-            if patience_wait >= cfg.early_stop_patience:
+            if enable_early_stopping and patience_wait >= cfg.early_stop_patience:
                 print(
                     f"Early stopping: no validation improvement for "
                     f"{cfg.early_stop_patience} epochs; best was epoch {best_epoch}.",
@@ -232,6 +233,11 @@ def main() -> None:
     parser.add_argument("--smoke", action="store_true")
     parser.add_argument("--skip-backups", action="store_true")
     parser.add_argument(
+        "--no-early-stopping",
+        action="store_true",
+        help="Run through the configured final epoch while still saving the best model",
+    )
+    parser.add_argument(
         "--stop-after-epoch",
         type=int,
         help="Stop cleanly after this epoch without changing the 60-epoch LR schedule",
@@ -253,6 +259,7 @@ def main() -> None:
         resume=args.resume,
         backups=not args.skip_backups,
         stop_after_epoch=args.stop_after_epoch,
+        enable_early_stopping=not args.no_early_stopping,
     )
 
 
