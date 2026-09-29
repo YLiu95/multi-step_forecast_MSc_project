@@ -21,6 +21,9 @@ optimizer-state memory and the ability to finish checkpoint uploads before the
 reservation ends. "Largest" means largest tested feasible candidate, not a proof
 of the global maximum or evidence of improved forecasting accuracy.
 
+For the complete chronology, decisions, failed attempts, validation scope, and
+backup evidence, see [WORK_PROCESS_REPORT.md](WORK_PROCESS_REPORT.md).
+
 ## Measured Pilot Outcome
 
 Job `3210061` ran the 7,444,254,721-parameter model with **TP=8, DP=12 on 96 A100s**.
