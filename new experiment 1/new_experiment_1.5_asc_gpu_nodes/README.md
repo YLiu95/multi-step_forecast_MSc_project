@@ -24,7 +24,7 @@ of the global maximum or evidence of improved forecasting accuracy.
 ## Deadline and Publication
 
 - Reservation end: 2026-09-29 16:00 UTC+02:00.
-- Latest optimizer update cutoff: 15:15; stop earlier if measured backup time requires it.
+- Pilot optimizer update cutoff: 15:00 UTC+02, moved earlier after measuring upload throughput.
 - Target for verified final backups: 15:50, leaving ten minutes of contingency.
 - Public code: this directory in `YLiu95/multi-step_forecast_MSc_project`.
 - Public models and aggregate metrics: `YL95/experiment-1.5-asc-gpu-nodes`.
@@ -47,3 +47,48 @@ Credentials are loaded locally from `$HOME/.env` with owner-only permissions.
 They are never placed in Git remotes, job arguments, resolved configuration, logs,
 or checkpoints. Installation and launch instructions will be completed alongside
 the validated executables.
+
+## Verified Setup and Selected Pilot
+
+Run `source ./env.sh` from this directory. This keeps the shared Python/OpenSSL
+libraries while filtering cluster CUDA/NCCL libraries that conflict with the
+PyTorch CUDA 12.4 wheel stack. Install `requirements.txt` in the private environment;
+never modify the shared tutorial environment.
+
+`python -m pytest -q tests` validates labels, session masks, sampling, artifact
+allowlisting, and full optimizer checkpoint restoration. The distributed checker
+`ascgpu.parallel_check` passed on CPU TP=2 and GPU TP=8/DP=2. A three-update real-data
+TP=8/DP=2 smoke run also completed and serialized recovery state.
+
+The selected pilot has **7,444,254,721 parameters**, width 4096, 20 temporal blocks,
+16 cross-ticker blocks, and microbatch 16 per data replica. The 16.63B candidate ran
+but exceeded the 85% reserved-memory target and could not be backed up within this
+reservation. The selected candidate used 32.90 GB peak reserved memory out of
+42.60 GB reported device capacity. Eight-shard upload probing measured about
+41.56 MB/s, which motivated the earlier shutdown and constrained model size.
+
+This is the largest tested candidate selected under both memory and backup-time
+constraints, not a proof that no intermediate architecture could fit.
+
+## Run and Resume
+
+The launcher runs one `torchrun` per allocated node, with eight GPU processes per
+node. Use `--nodes=1-48 --ntasks-per-node=1 --gpus-per-node=8 --cpus-per-task=32
+--mem=256G` with `salloc --immediate=60`. Do not fix the total task count to 48.
+Export `EXPERIMENT_DIR` to this directory before submitting, then run:
+
+```bash
+srun --ntasks-per-node=1 --cpus-per-task=32 bash "$EXPERIMENT_DIR/node_entry.sh" \
+	ascgpu.train --root "$ARTIFACT_ROOT" --config "$EXPERIMENT_DIR/configs/pilot.json" \
+	--global-batch 320 --microbatch 16 --train-until 2026-09-29T15:00:00+02:00
+```
+
+Choose a wall-time ending before reservation expiry. This dated deadline must be
+changed for a later approved allocation. `--global-batch 320` counts distinct real
+examples across DP replicas, not TP ranks; padding is masked. Add `--resume` with
+a completed local checkpoint directory to restore optimizer and sampler state.
+
+Run `python -m ascgpu.artifacts watch --root "$ARTIFACT_ROOT"` on the shared-storage
+JupyterHub host to back up live aggregate logs and publish best/latest after the
+training completion marker. Final publishing compares remote sizes and Git/LFS
+digests. Do not delete local checkpoints if verification fails.

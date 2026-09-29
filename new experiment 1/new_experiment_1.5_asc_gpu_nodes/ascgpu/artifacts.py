@@ -88,6 +88,9 @@ def final_files(root: Path) -> dict[str, Path]:
         path = root / name
         if path.exists():
             result[name] = path
+    history = root / "history.jsonl"
+    if history.exists():
+        result["reports/history.jsonl"] = history
     vocabulary = root / "panel" / "vocabulary.json"
     if vocabulary.exists():
         result["vocabulary.json"] = vocabulary
@@ -107,6 +110,9 @@ def git_blob_hash(path: Path) -> str:
 
 
 def publish(root: Path) -> dict:
+    template = Path(__file__).resolve().parents[1] / "MODEL_CARD.md"
+    if template.exists():
+        (root / "README.md").write_text(template.read_text())
     paths = final_files(root)
     api = authenticated_api()
     operations = [CommitOperationAdd(path_in_repo=name, path_or_fileobj=str(path)) for name, path in paths.items()]
