@@ -1,0 +1,9 @@
+{
+  "bytes": 536881024,
+  "seconds": 12.918913637055084,
+  "shards": 8,
+  "effective_bytes_per_second": 41557753.15813506,
+  "commit": "3c8cefc32e2b9d0883e02064bfc8349ddefdcd9f",
+  "remote_digests_verified": true,
+  "includes_hashing_overhead": false
+}

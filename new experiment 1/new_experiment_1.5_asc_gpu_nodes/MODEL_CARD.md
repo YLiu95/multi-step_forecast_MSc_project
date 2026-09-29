@@ -13,6 +13,22 @@ This is a short, experimental signed-return forecasting run, not a validated
 trading model or a claim of predictive profitability. It predicts one signed
 seven-market-session cumulative log return in percentage-point units.
 
+## Observed Pilot Result
+
+The 7,444,254,721-parameter model ran on TP=8, DP=12 (96 A100 GPUs), completing
+21 updates and 6,720 training examples. Both saved selections are from update 21.
+On the fixed 839-anchor pilot validation subset, signed Huber loss was **5.023262**
+versus **5.004593 for a constant-zero forecast**. The model did not beat that
+baseline. Predictions were nearly constant; the run is far too short to assess
+convergence or the value of the model's capacity.
+
+The distributed job had a nonzero exit after its complete checkpoints, events,
+and summary were saved. Artifact sizes and digests were verified remotely before
+the reservation ended. A later tiny TP=8/DP=12 diagnostic passed after shutdown
+lifecycle changes; the full model was not retrained to validate that change.
+See `reports/operational_status.json` and `reports/backup_verification.json` for
+the exact scope of verification.
+
 ## Architecture and Inputs
 
 The model is a hierarchical temporal-then-cross-ticker Transformer with learned

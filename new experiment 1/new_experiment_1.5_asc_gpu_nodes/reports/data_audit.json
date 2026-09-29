@@ -1,0 +1,334 @@
+{
+  "dataset": "YL95/new_experiment_1-data",
+  "revision": "bcbbefdbe2313673895eb1a0d354747a9f1624fa",
+  "contract": {
+    "window": 256,
+    "horizon": 7,
+    "basket": 64,
+    "train_end": "2018-12-31",
+    "val_end": "2022-12-31",
+    "embargo": 7,
+    "clip": 8.0
+  },
+  "return_scale_pct": 3.406078636328312,
+  "n_tickers": 39260,
+  "markets": [
+    {
+      "name": "AU",
+      "tickers": 1853,
+      "sessions": 9389,
+      "offset": 0,
+      "first_date": "1990-01-01",
+      "last_date": "2026-08-25",
+      "sum": -171840.635083022,
+      "sum_squares": 62757677.77191444,
+      "count": 4268832,
+      "observations": 7346582,
+      "invalid_prices": 21616,
+      "duplicates": 0,
+      "anchors": {
+        "train": 3919711,
+        "val": 1323786,
+        "test": 1541411
+      },
+      "eligible_tickers": {
+        "train": 1214,
+        "val": 1557,
+        "test": 1774
+      }
+    },
+    {
+      "name": "CA",
+      "tickers": 2514,
+      "sessions": 9260,
+      "offset": 1853,
+      "first_date": "1990-01-01",
+      "last_date": "2026-08-25",
+      "sum": -237740.33683132392,
+      "sum_squares": 129757652.08572702,
+      "count": 4980381,
+      "observations": 9065242,
+      "invalid_prices": 18202,
+      "duplicates": 0,
+      "anchors": {
+        "train": 4532941,
+        "val": 1762108,
+        "test": 2034530
+      },
+      "eligible_tickers": {
+        "train": 1553,
+        "val": 2049,
+        "test": 2407
+      }
+    },
+    {
+      "name": "CH",
+      "tickers": 266,
+      "sessions": 9370,
+      "offset": 4367,
+      "first_date": "1990-01-03",
+      "last_date": "2026-08-25",
+      "sum": 13794.046225933162,
+      "sum_squares": 3271844.261804539,
+      "count": 845906,
+      "observations": 1264632,
+      "invalid_prices": 0,
+      "duplicates": 0,
+      "anchors": {
+        "train": 739946,
+        "val": 213903,
+        "test": 184701
+      },
+      "eligible_tickers": {
+        "train": 213,
+        "val": 233,
+        "test": 225
+      }
+    },
+    {
+      "name": "CN",
+      "tickers": 6861,
+      "sessions": 8939,
+      "offset": 4633,
+      "first_date": "1990-12-19",
+      "last_date": "2026-08-25",
+      "sum": 127866.36496801193,
+      "sum_squares": 77355581.39144823,
+      "count": 9089968,
+      "observations": 18849477,
+      "invalid_prices": 2274,
+      "duplicates": 0,
+      "anchors": {
+        "train": 8173565,
+        "val": 3748622,
+        "test": 5037518
+      },
+      "eligible_tickers": {
+        "train": 3354,
+        "val": 4990,
+        "test": 6463
+      }
+    },
+    {
+      "name": "DE",
+      "tickers": 915,
+      "sessions": 8055,
+      "offset": 11494,
+      "first_date": "1995-03-24",
+      "last_date": "2026-08-25",
+      "sum": 23488.571592573193,
+      "sum_squares": 44971531.76079056,
+      "count": 2393289,
+      "observations": 3963389,
+      "invalid_prices": 533,
+      "duplicates": 0,
+      "anchors": {
+        "train": 2195663,
+        "val": 748950,
+        "test": 731967
+      },
+      "eligible_tickers": {
+        "train": 704,
+        "val": 840,
+        "test": 858
+      }
+    },
+    {
+      "name": "FR",
+      "tickers": 630,
+      "sessions": 9456,
+      "offset": 12409,
+      "first_date": "1990-01-01",
+      "last_date": "2026-08-25",
+      "sum": 2812.268548316548,
+      "sum_squares": 18122321.85420036,
+      "count": 1879104,
+      "observations": 3004038,
+      "invalid_prices": 11482,
+      "duplicates": 0,
+      "anchors": {
+        "train": 1697980,
+        "val": 528262,
+        "test": 539150
+      },
+      "eligible_tickers": {
+        "train": 492,
+        "val": 563,
+        "test": 605
+      }
+    },
+    {
+      "name": "GB",
+      "tickers": 1492,
+      "sessions": 9392,
+      "offset": 13039,
+      "first_date": "1990-01-01",
+      "last_date": "2026-08-25",
+      "sum": 8674.089259919105,
+      "sum_squares": 36491706.14492923,
+      "count": 4473065,
+      "observations": 7081988,
+      "invalid_prices": 916,
+      "duplicates": 0,
+      "anchors": {
+        "train": 4172788,
+        "val": 1209700,
+        "test": 1277481
+      },
+      "eligible_tickers": {
+        "train": 1115,
+        "val": 1352,
+        "test": 1451
+      }
+    },
+    {
+      "name": "HK",
+      "tickers": 2541,
+      "sessions": 8220,
+      "offset": 14531,
+      "first_date": "1993-12-14",
+      "last_date": "2026-08-25",
+      "sum": -48606.292776613875,
+      "sum_squares": 51186865.31359442,
+      "count": 4522844,
+      "observations": 8658784,
+      "invalid_prices": 10917,
+      "duplicates": 0,
+      "anchors": {
+        "train": 4070600,
+        "val": 1867903,
+        "test": 2001328
+      },
+      "eligible_tickers": {
+        "train": 1608,
+        "val": 2143,
+        "test": 2413
+      }
+    },
+    {
+      "name": "IN",
+      "tickers": 4797,
+      "sessions": 8999,
+      "offset": 17072,
+      "first_date": "1991-01-02",
+      "last_date": "2026-08-25",
+      "sum": 214108.96986840028,
+      "sum_squares": 233661147.590131,
+      "count": 9238039,
+      "observations": 16474660,
+      "invalid_prices": 4035,
+      "duplicates": 0,
+      "anchors": {
+        "train": 8393418,
+        "val": 3238117,
+        "test": 3502698
+      },
+      "eligible_tickers": {
+        "train": 3083,
+        "val": 3559,
+        "test": 4426
+      }
+    },
+    {
+      "name": "JP",
+      "tickers": 3762,
+      "sessions": 6821,
+      "offset": 21869,
+      "first_date": "1999-05-06",
+      "last_date": "2026-08-25",
+      "sum": 133206.30947395656,
+      "sum_squares": 73709691.791975,
+      "count": 11145334,
+      "observations": 17612135,
+      "invalid_prices": 14485,
+      "duplicates": 0,
+      "anchors": {
+        "train": 10342687,
+        "val": 3049548,
+        "test": 3132800
+      },
+      "eligible_tickers": {
+        "train": 3008,
+        "val": 3384,
+        "test": 3712
+      }
+    },
+    {
+      "name": "KR",
+      "tickers": 2522,
+      "sessions": 6660,
+      "offset": 25631,
+      "first_date": "2000-01-04",
+      "last_date": "2026-08-25",
+      "sum": 40710.10001241264,
+      "sum_squares": 48345992.20632401,
+      "count": 5605118,
+      "observations": 9658170,
+      "invalid_prices": 9277,
+      "duplicates": 0,
+      "anchors": {
+        "train": 5141076,
+        "val": 1843486,
+        "test": 1958003
+      },
+      "eligible_tickers": {
+        "train": 1732,
+        "val": 2078,
+        "test": 2438
+      }
+    },
+    {
+      "name": "NL",
+      "tickers": 166,
+      "sessions": 9170,
+      "offset": 28153,
+      "first_date": "1991-02-12",
+      "last_date": "2026-08-25",
+      "sum": -63.19273129965495,
+      "sum_squares": 1540638.1690685127,
+      "count": 292086,
+      "observations": 508204,
+      "invalid_prices": 3490,
+      "duplicates": 0,
+      "anchors": {
+        "train": 43398,
+        "val": 86891,
+        "test": 103111
+      },
+      "eligible_tickers": {
+        "train": 75,
+        "val": 104,
+        "test": 125
+      }
+    },
+    {
+      "name": "US",
+      "tickers": 10941,
+      "sessions": 9229,
+      "offset": 28319,
+      "first_date": "1990-01-02",
+      "last_date": "2026-08-25",
+      "sum": 245287.63546823655,
+      "sum_squares": 106101281.13888688,
+      "count": 17745983,
+      "observations": 32005959,
+      "invalid_prices": 14296,
+      "duplicates": 0,
+      "anchors": {
+        "train": 16435193,
+        "val": 5578037,
+        "test": 7093025
+      },
+      "eligible_tickers": {
+        "train": 4817,
+        "val": 6767,
+        "test": 9591
+      }
+    }
+  ],
+  "raw_return_dtype": "float32",
+  "input_dtype": "float16",
+  "monitor_count": 839,
+  "monitor_sha256": "0083a8d81376ef09efcb540ae599100f7ec09dfabfd49e3aa8d1d7f0972298f1",
+  "test_evaluated": false
+}

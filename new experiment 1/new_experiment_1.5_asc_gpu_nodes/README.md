@@ -4,10 +4,10 @@ On the Athena JupyterHub/VS Code host:
 
 ```bash
 export ARTIFACT_ROOT="/net/tscratch/people/$(id -un)/experiments/experiment_1.5_asc_gpu_nodes"
-"$HOME/.venvs/experiment-1.5-gpu/bin/tensorboard" --logdir "$ARTIFACT_ROOT/runs" --host 127.0.0.1 --port 16006
+"$HOME/.venvs/experiment-1.5-gpu/bin/tensorboard" --logdir "$ARTIFACT_ROOT/runs" --host 127.0.0.1 --port 16007
 ```
 
-Forward port 16006 privately in VS Code. Do not expose the logs through a public tunnel.
+Forward port 16007 privately in VS Code. Port 16006 was already occupied and was left untouched. Do not expose the logs through a public tunnel.
 
 ## Experiment 1.5: Athena TP + DP Pilot
 
@@ -20,6 +20,44 @@ across nodes. Model size is selected by bounded capacity profiling, including
 optimizer-state memory and the ability to finish checkpoint uploads before the
 reservation ends. "Largest" means largest tested feasible candidate, not a proof
 of the global maximum or evidence of improved forecasting accuracy.
+
+## Measured Pilot Outcome
+
+Job `3210061` ran the 7,444,254,721-parameter model with **TP=8, DP=12 on 96 A100s**.
+It completed **21 optimizer updates and 6,720 unique training examples**, about
+0.0096% of the 69,858,966 eligible training anchors. This is an operational pilot,
+not meaningful convergence evidence.
+
+| Measurement | Result |
+| --- | --- |
+| Fixed pilot validation subset | 839 anchors, market-stratified with available Mag 7 targets |
+| Pilot signed Huber | 5.023262 |
+| Zero-return baseline Huber, same subset | 5.004593 |
+| Pilot MAE / RMSE | 5.490915 / 8.567953 log-return percentage points |
+| Prediction / target standard deviation | 0.012205 / 8.563569 percentage points |
+| Best and latest checkpoint | Both update 21, with different inference/recovery formats |
+| Last optimizer update | 2026-09-29 14:59:32 UTC+02 |
+| Checkpoints and summary complete | About 15:03 UTC+02 |
+| First verified remote artifact set | 104,331,123,677 bytes at 15:17:57 UTC+02 |
+| Main job exit | FAILED, exit 1, after complete artifacts were written |
+
+**The model did not beat the zero-return baseline.** Predictions were nearly
+constant after this very short run. Do not infer a structural failure or a
+capacity benefit from 21 updates; run a smaller matched-data baseline and a much
+longer controlled budget before interpreting forecasting quality. No full epoch,
+full validation, or test-set evaluation was completed.
+
+Full TP+DP training recorded **37.78 GiB peak reserved memory on rank 0**, tighter
+than the one-node profile suggested. This is reserved, not measured live allocated
+memory, and it is not an all-rank maximum. Reduce microbatch size and measure all
+rank peaks before a longer run; the one-node headroom estimate did not carry over
+unchanged to DDP.
+
+The original distributed-exit error is retained in the operational report; its
+exact cause was not conclusively established. Explicit DP/TP/world teardown and
+persistent per-rank error logs were added. A subsequent tiny TP=8/DP=12 diagnostic
+including DDP-gradient equivalence completed cleanly in job `3210183`. The full
+7.44B run was not restarted after the training cutoff.
 
 ## Deadline and Publication
 
@@ -45,8 +83,8 @@ checkpoints are unchanged. The data revision is
 
 Credentials are loaded locally from `$HOME/.env` with owner-only permissions.
 They are never placed in Git remotes, job arguments, resolved configuration, logs,
-or checkpoints. Installation and launch instructions will be completed alongside
-the validated executables.
+or checkpoints. The source commit recorded in each checkpoint identifies the
+implementation used for that training state.
 
 ## Verified Setup and Selected Pilot
 

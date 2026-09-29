@@ -1,0 +1,195 @@
+{
+  "repository": "YL95/experiment-1.5-asc-gpu-nodes",
+  "commit": "0f40d433d2d7e017edf1489f8a2792a4462d29d6",
+  "bytes": 104331130121,
+  "seconds": 182.7917067189701,
+  "verified_files": [
+    {
+      "path": "latest/tp-00.pt",
+      "bytes": 11176569072,
+      "digest": "efb1845a25b9f58de541779c8c003584bb2a52f5d20d94cf3254cbe9fc9ae34e"
+    },
+    {
+      "path": "latest/tp-01.pt",
+      "bytes": 11176569072,
+      "digest": "a5e975b4f9ff7475a7c1dd21867f50fd9c83ac3e57da39092a1f87c17ae836d8"
+    },
+    {
+      "path": "latest/tp-02.pt",
+      "bytes": 11176569072,
+      "digest": "8db0d2a829937a51b9939de0d03533655b3a866c36375902d259fed3a42ffdcb"
+    },
+    {
+      "path": "latest/tp-03.pt",
+      "bytes": 11176569072,
+      "digest": "0d0db12c38e62713e04a915e1794903864b5ae55a13c5ea5b594594ea59b42c1"
+    },
+    {
+      "path": "latest/tp-04.pt",
+      "bytes": 11176569072,
+      "digest": "cf6ceb2ecba440a203a56b2fb46c41c4ac4e5a860d3c7e0141f6316c4d2da85a"
+    },
+    {
+      "path": "latest/tp-05.pt",
+      "bytes": 11176569072,
+      "digest": "da429f456b3bdb97f492cbca4f7d60fc217ca6989d22d563b64a03c6d574692d"
+    },
+    {
+      "path": "latest/tp-06.pt",
+      "bytes": 11176569072,
+      "digest": "114228767ce47f22f6e6f7ef90628710e0875e6e540b6d0dbdea969f205c05be"
+    },
+    {
+      "path": "latest/tp-07.pt",
+      "bytes": 11176569072,
+      "digest": "078ff7ffcf406aeec02eb3b221475e1a9e44d83bd897775793056cf0bb2b3b98"
+    },
+    {
+      "path": "latest/state.json",
+      "bytes": 682,
+      "digest": "a4115128d819642b58c55ee87ba6871f6176471f"
+    },
+    {
+      "path": "latest/config.json",
+      "bytes": 212,
+      "digest": "a01e9241b2bcf2b6c7f31df7483edbefa4badea6"
+    },
+    {
+      "path": "latest/partitions.json",
+      "bytes": 20483,
+      "digest": "bfe18e65a9b758393726a504823b40dda433705c"
+    },
+    {
+      "path": "best/weights-00.safetensors",
+      "bytes": 1864551724,
+      "digest": "6a3b6f519a5a400c5de358440882f890b531a22201e13173b0685e20c0d4aae0"
+    },
+    {
+      "path": "best/weights-01.safetensors",
+      "bytes": 1864551724,
+      "digest": "6233db789f065a8018daa4e5ca4e4a8791fe13f358106ca54d23ccdba0f41ace"
+    },
+    {
+      "path": "best/weights-02.safetensors",
+      "bytes": 1864551724,
+      "digest": "c6434f7d5e9fb7cdc85951d21bf838ca2b85706498b7520fbaab751e5a68cb2d"
+    },
+    {
+      "path": "best/weights-03.safetensors",
+      "bytes": 1864551724,
+      "digest": "b4b93496c267ee9d12aae340305f8ea9810694c908471cc2c4beb4ead53b3d7d"
+    },
+    {
+      "path": "best/weights-04.safetensors",
+      "bytes": 1864551724,
+      "digest": "a29de28c5106a03d272fd089993d4a784d6ef951619e50472240d2e23a3baeb9"
+    },
+    {
+      "path": "best/weights-05.safetensors",
+      "bytes": 1864551724,
+      "digest": "3248d07f11ff1e6dcf2e248b358dd86c9089a315c30b094bf60f5842de1ae4c3"
+    },
+    {
+      "path": "best/weights-06.safetensors",
+      "bytes": 1864551724,
+      "digest": "2983418786a1d364cbb5b991d46d5496c635dca9c24624558d536f88229106ca"
+    },
+    {
+      "path": "best/weights-07.safetensors",
+      "bytes": 1864551724,
+      "digest": "7e91934afe8f3b732a367472d914a371976537ef05f994096b421d58450d2d55"
+    },
+    {
+      "path": "best/state.json",
+      "bytes": 682,
+      "digest": "a4115128d819642b58c55ee87ba6871f6176471f"
+    },
+    {
+      "path": "best/config.json",
+      "bytes": 212,
+      "digest": "a01e9241b2bcf2b6c7f31df7483edbefa4badea6"
+    },
+    {
+      "path": "best/partitions.json",
+      "bytes": 20483,
+      "digest": "bfe18e65a9b758393726a504823b40dda433705c"
+    },
+    {
+      "path": "reports/training_summary.json",
+      "bytes": 5957,
+      "digest": "f114d610c48eb735200967fcb6d70d9b92ebd6cf"
+    },
+    {
+      "path": "reports/upload_probe.json",
+      "bytes": 253,
+      "digest": "53aba25affba6267f63d218713f945cc7f631422"
+    },
+    {
+      "path": "reports/data_audit.json",
+      "bytes": 7727,
+      "digest": "d4992ef0322a56a5245cea9119f4d7207a6bb388"
+    },
+    {
+      "path": "reports/capacity-4096-20-16.json",
+      "bytes": 776,
+      "digest": "72735bf9f389fa5c318849b3c14188bfe836bae4"
+    },
+    {
+      "path": "reports/parallel-check-cuda-tp8-dp12.json",
+      "bytes": 499,
+      "digest": "10b3983d00b3e0d3ae98747caaaee805e1d06ad2"
+    },
+    {
+      "path": "reports/runtime_manifest.json",
+      "bytes": 2534,
+      "digest": "757c224e566530887834489d3f88ef976828d045"
+    },
+    {
+      "path": "reports/research_findings.json",
+      "bytes": 999,
+      "digest": "3b3dd5186b9ebeed8f07bfacf8764af28b195c1c"
+    },
+    {
+      "path": "reports/parallel-check-cpu-tp2-dp2.json",
+      "bytes": 519,
+      "digest": "e23c48d08063dfa61d9431b2362c707ee2c46572"
+    },
+    {
+      "path": "reports/capacity-6144-20-16.json",
+      "bytes": 779,
+      "digest": "bd6f4b312bd41ee38626faf47387783938743119"
+    },
+    {
+      "path": "reports/operational_status.json",
+      "bytes": 1375,
+      "digest": "6ada6d540dea9e952668c4ecfd89ba49c8c925f1"
+    },
+    {
+      "path": "runs/athena-20260929/events.out.tfevents.1790686300.t0001.2333519.0",
+      "bytes": 20973,
+      "digest": "f537d0a3ebd3015aba9be27ab658aa7a456efdc470277be3ecb63e205f7d47d0"
+    },
+    {
+      "path": "config.json",
+      "bytes": 1099,
+      "digest": "560830d21ba9d1225320f7ab316a4a30489e90e2"
+    },
+    {
+      "path": "README.md",
+      "bytes": 3821,
+      "digest": "aa75a574009d09869b474c61e6ef78967cdfe37b"
+    },
+    {
+      "path": "reports/history.jsonl",
+      "bytes": 5203,
+      "digest": "02c1a505cfc3a748ca438020d1043c1b8f84007e"
+    },
+    {
+      "path": "vocabulary.json",
+      "bytes": 2068485,
+      "digest": "1219204a00afdf1f6dffd8170fe48a63ffe7cba3"
+    }
+  ],
+  "verified_at_unix": 1790689727.4351234,
+  "status": "verified"
+}

@@ -22,3 +22,15 @@
 - Latest remains a full FP32 resumable state. Best inference matrices use BF16 with FP32 replicated normalization, reducing final transfer size to approximately 104 GB combined.
 - Training cutoff moved to 15:00 UTC+02 to reserve roughly an hour for staging, upload, and verification. Larger intermediate models were not exhaustively searched; the backup deadline, not only GPU memory, limits this pilot.
 - Dropout is zero and EMA is disabled for this capacity/operational pilot. Full-epoch coverage and full validation are not claimed; subset monitoring and wall-clock checkpoints provide pilot diagnostics only.
+
+## Pilot Outcome and Operations
+
+- Main job 3210061 received 12 nodes / 96 A100s, 384 CPUs and 3 TiB host RAM. Actual layout was TP=8, DP=12.
+- It completed 21 updates / 6,720 real examples. The final update was at 14:59:32 UTC+02; final checkpoint/summary completion was about 15:03.
+- Best and latest both reference step 21. Latest includes full FP32 optimizer and sampler state; best is an inference export.
+- Fixed pilot subset: 839 anchors. Huber 5.023262 versus zero baseline 5.004593; MAE 5.490915 pp, RMSE 8.567953 pp. Prediction standard deviation was only 0.012205 pp versus target standard deviation 8.563569 pp. This does not establish useful forecasting skill.
+- Full-run rank-0 reserved-memory peak was 37.775 GiB, above the one-node profiling estimate. Before longer runs, reduce microbatch and instrument all-rank allocated/reserved peaks.
+- The main job ended FAILED/1 after artifacts were saved. Do not reclassify it as a clean job exit. The exact original shutdown cause could not be conclusively determined from the accessible terminal output.
+- Added explicit process-group teardown, worker exception recording, and persistent per-rank logs. CPU TP=2/DP=2 and GPU TP=8/DP=12 DDP-gradient/lifecycle diagnostics passed; GPU retest job 3210183 exited 0. No further model training was performed after the cutoff.
+- Initial final artifact publication verified 33 files totaling 104,331,123,677 bytes at 15:17:57 UTC+02, commit 6deab8dd68472a39d3ef24a34b30094dda61e8b7. The full transfer was substantially faster than the small probes; future planning should use representative full-checkpoint measurements plus contingency.
+- Next research priority: a smaller matched-data baseline, longer and explicit example budgets, robust full validation, prediction-variance monitoring, and point-in-time data-quality checks. Do not scale model size again merely because memory is available.

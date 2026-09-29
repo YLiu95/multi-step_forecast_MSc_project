@@ -1,0 +1,29 @@
+{
+  "parameters": 7444254721,
+  "tp": 8,
+  "dp": 12,
+  "updates": 21,
+  "samples": 6720,
+  "training_anchor_fraction": 9.619380853704591e-05,
+  "pilot_validation": {
+    "count": 839,
+    "huber": 5.023262335652092,
+    "mae": 5.49091530894068,
+    "rmse": 8.56795252137228,
+    "prediction_mean": -0.5119445582538736,
+    "target_mean": -0.2428819503062388,
+    "prediction_std": 0.012205233583159862,
+    "target_std": 8.563568713209424,
+    "zero_huber": 5.004592867335443
+  },
+  "beats_zero_return_baseline": false,
+  "test_evaluated": false,
+  "full_validation_completed": false,
+  "interpretation": "Severely undertrained, near-constant predictions; no demonstrated forecasting advantage",
+  "next_priorities": [
+    "Matched-data smaller baseline and explicit example budget",
+    "All-rank memory measurement and smaller microbatch before longer runs",
+    "Full chronological validation and point-in-time data auditing",
+    "Validate full-model shutdown under the hardened launcher"
+  ]
+}

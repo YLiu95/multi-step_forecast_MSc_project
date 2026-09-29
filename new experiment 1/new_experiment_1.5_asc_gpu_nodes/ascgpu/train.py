@@ -18,6 +18,7 @@ import torch
 from torch import distributed as dist
 from torch.nn import functional as functional
 from torch.nn.parallel import DistributedDataParallel
+from torch.distributed.elastic.multiprocessing.errors import record
 from torch.utils.tensorboard import SummaryWriter
 
 from .contract import deadline_timestamp
@@ -156,6 +157,7 @@ def evaluate(model, dataset, monitor, microbatch, context, mag7_ids, market_coun
     return summaries
 
 
+@record
 def train(arguments):
     context = ParallelContext.initialize(8)
     for signum in (signal.SIGTERM, signal.SIGUSR1, signal.SIGINT):
@@ -298,8 +300,7 @@ def train(arguments):
                     "full_validation_completed": False, "pilot_only": True})
         write_json(arguments.root / "TRAINING_DONE.json", {"step": state["step"], "samples": state["samples"], "completed_at_unix": time.time()})
         print(json.dumps({"event": "training_done", "step": state["step"], "samples": state["samples"]}), flush=True)
-    barrier()
-    dist.destroy_process_group()
+    context.close()
 
 
 if __name__ == "__main__":

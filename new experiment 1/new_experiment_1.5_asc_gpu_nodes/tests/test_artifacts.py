@@ -21,6 +21,7 @@ def test_only_complete_checkpoints_and_allowed_artifacts(tmp_path):
     log.parent.mkdir(parents=True)
     log.write_bytes(b"events")
     (tmp_path / "reports").mkdir()
+    write_json(tmp_path / "reports" / "backup_verification.json", {"previous_verification": True})
     (tmp_path / ".env").write_text("not-a-real-secret")
     (tmp_path / "cache").mkdir()
     (tmp_path / "cache" / "private.parquet").write_bytes(b"private")

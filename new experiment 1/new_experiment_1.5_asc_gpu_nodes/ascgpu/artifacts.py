@@ -81,7 +81,8 @@ def final_files(root: Path) -> dict[str, Path]:
         for name in ("state.json", "config.json", "partitions.json"):
             result[f"{label}/{name}"] = directory / name
     for path in (root / "reports").glob("*.json"):
-        result[f"reports/{path.name}"] = path
+        if path.name != "backup_verification.json":
+            result[f"reports/{path.name}"] = path
     for path in (root / "runs").rglob("events.out.tfevents.*"):
         result[path.relative_to(root).as_posix()] = path
     for name in ("config.json", "README.md"):

@@ -1,0 +1,29 @@
+{
+  "kind": "synthetic_capacity_probe_not_training",
+  "job_id": "3210029",
+  "tp": 8,
+  "dp": 1,
+  "parameters": 7444254721,
+  "config": {
+    "width": 4096,
+    "heads": 64,
+    "feedforward": 16384,
+    "temporal_depth": 20,
+    "cross_depth": 16,
+    "window": 256,
+    "patch": 8,
+    "basket": 64,
+    "tickers": 39260,
+    "rematerialize": true,
+    "seed": 1337
+  },
+  "microbatch": 16,
+  "peak_allocated_bytes": 21263013376,
+  "peak_reserved_bytes": 32904314880,
+  "device_capacity_bytes": 42600300544,
+  "seconds_per_microbatch": 2.189325945917517,
+  "safe_memory_fit": true,
+  "latest_checkpoint_bytes_estimate": 89331056652,
+  "best_checkpoint_bytes_estimate": 29777018884,
+  "optimizer": "FP32 parameters, gradients, and AdamW moments; BF16 matrix computation"
+}

@@ -16,4 +16,6 @@ exec python -m torch.distributed.run \
     --master_addr="$MASTER_ADDR" \
     --master_port="$MASTER_PORT" \
     --max_restarts=0 \
+    --log-dir="$ARTIFACT_ROOT/logs/torchrun-$SLURM_JOB_ID/node-$SLURM_PROCID" \
+    --redirects=3 --tee=0:3 \
     -m "$@"

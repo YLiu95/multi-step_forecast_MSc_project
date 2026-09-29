@@ -1,0 +1,25 @@
+{
+  "status": "passed",
+  "tp": 8,
+  "dp": 12,
+  "device": "cuda",
+  "forward_max_error": 0.0078125,
+  "gradient_max_error": 0.0126953125,
+  "parameters": 20417,
+  "ddp_gradient_max_error": 0.002115905284881592,
+  "config": {
+    "width": 32,
+    "heads": 8,
+    "feedforward": 64,
+    "temporal_depth": 1,
+    "cross_depth": 1,
+    "window": 16,
+    "patch": 4,
+    "basket": 4,
+    "tickers": 19,
+    "rematerialize": false,
+    "seed": 1337
+  },
+  "job_id": "3210183",
+  "clean_shutdown": true
+}

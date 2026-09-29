@@ -21,6 +21,7 @@ class ParallelContext:
     tp_group: object = None
     dp_group: object = None
     device: torch.device = torch.device("cpu")
+    owns_process_group: bool = False
 
     @classmethod
     def initialize(cls, tp_size: int = 8, device: str = "cuda") -> "ParallelContext":
@@ -34,6 +35,7 @@ class ParallelContext:
             torch.cuda.set_device(selected)
         dist.init_process_group("nccl" if device == "cuda" else "gloo", timeout=timedelta(minutes=10))
         context = cls(tp_size, rank % tp_size, world // tp_size, rank // tp_size, rank, local_rank, device=selected)
+        context.owns_process_group = True
         for replica in range(context.dp_size):
             ranks = list(range(replica * tp_size, (replica + 1) * tp_size))
             group = dist.new_group(ranks)
@@ -45,6 +47,19 @@ class ParallelContext:
             if rank in ranks:
                 context.dp_group = group
         return context
+
+    def close(self):
+        if not self.owns_process_group or not dist.is_initialized():
+            return
+        if self.device.type == "cuda":
+            torch.cuda.synchronize(self.device)
+        dist.barrier()
+        for group in (self.dp_group, self.tp_group):
+            if group is not None:
+                dist.destroy_process_group(group)
+            dist.barrier()
+        dist.destroy_process_group()
+        self.owns_process_group = False
 
 
 class CopyToTensorGroup(torch.autograd.Function):

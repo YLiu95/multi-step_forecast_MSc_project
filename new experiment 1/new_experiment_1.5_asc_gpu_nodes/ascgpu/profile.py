@@ -10,11 +10,13 @@ import time
 import torch
 from torch import distributed as dist
 from torch.nn import functional as functional
+from torch.distributed.elastic.multiprocessing.errors import record
 
 from .data import write_json
 from .model import ForecastModel, ModelConfig, ParallelContext, clip_global_norm
 
 
+@record
 def profile(arguments):
     context = ParallelContext.initialize(8)
     metadata_path = arguments.root / "panel" / "meta.json"
@@ -64,7 +66,7 @@ def profile(arguments):
     if context.rank == 0:
         write_json(arguments.root / "reports" / f"capacity-{arguments.width}-{arguments.temporal}-{arguments.cross}.json", result)
         print(json.dumps(result), flush=True)
-    dist.destroy_process_group()
+    context.close()
 
 
 if __name__ == "__main__":
