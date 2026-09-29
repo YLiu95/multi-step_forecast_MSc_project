@@ -1,0 +1,13 @@
+{
+  "width": 128,
+  "heads": 8,
+  "feedforward": 512,
+  "temporal_depth": 1,
+  "cross_depth": 1,
+  "window": 256,
+  "patch": 8,
+  "basket": 64,
+  "tickers": 39260,
+  "rematerialize": true,
+  "seed": 1337
+}
