@@ -1,0 +1,12 @@
+.env
+*.env
+__pycache__/
+.pytest_cache/
+*.pyc
+*.pt
+*.safetensors
+*.npy
+*.parquet
+events.out.tfevents.*
+artifacts/
+cache/
